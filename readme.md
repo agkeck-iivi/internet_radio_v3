@@ -1,45 +1,16 @@
-# Internet radio v2
+# Internet radio v3
 
 ## hardware
 
 * ESP32s3 DevkitC N16R8
-* ES8388 audio board
-  * both clock and data lines require low pass filters with caps close to es8388
-* 2 rotary encoders with push buttons and hardware debounce
-  * encoder 1: volume + mute + hold down at boot to enter provisioning mode
-  * encoder 2: station selection + display ip address + reboot
-
-* 1 IR LED
-* 1 OLED display spi interface
 
 ### prototype
 
-![breadboard development](breadboard_development.jpg)
-*Breadboard development*
-
 ### header wiring
-
-![header wiring](header_wiring.png)
-*Header wiring diagram*
 
 ### schematic
 
-![schematic](v2_schematic.png)
-*Schematic diagram*
-
 ### build
-
-![interior during build](build_interior_1.jpg)
-*Interior during build*
-
-![interior during build oblique](build_interior_2.jpg)
-*Interior during build oblique*
-
-![front panel of completed radio](build_exterior_1.jpg)
-*Front panel of completed radio*
-
-![back of completed radio](build_exterior_2.jpg)
-*Back of completed radio*
 
 ## software
 
