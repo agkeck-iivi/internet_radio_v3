@@ -3,6 +3,8 @@
 ## hardware
 
 * ESP32s3 DevkitC N16R8
+* [adafruit pcm5122 audio board](https://learn.adafruit.com/adafruit-pcm5122-i2s-dac/)
+*
 
 ### prototype
 
