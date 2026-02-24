@@ -5,9 +5,9 @@
 	(uuid "ad99cfc7-1930-4a76-846f-3ad4dbd23fae")
 	(paper "USLetter")
 	(title_block
-		(title "Internet Radio V2")
-		(date "2025-12-01")
-		(rev "2.0")
+		(title "Internet Radio V3")
+		(date "2026-02-24")
+		(rev "3.0")
 		(company "AG Keck")
 	)
 	(lib_symbols
@@ -3129,10 +3129,6 @@
 		(uuid "1fd69d31-5fea-4d18-bc75-afd678177ba9")
 	)
 	(no_connect
-		(at 157.48 99.06)
-		(uuid "38eb0ca8-5988-4df0-a896-3e9c210bf2c4")
-	)
-	(no_connect
 		(at 106.68 81.28)
 		(uuid "3fad47b5-4dc4-4f3c-8136-160453c974c7")
 	)
@@ -4117,6 +4113,16 @@
 			(type default)
 		)
 		(uuid "efebf949-f9ab-4e4c-8e97-6b14ee0dd026")
+	)
+	(wire
+		(pts
+			(xy 157.48 99.06) (xy 167.64 99.06)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f01fecb8-521e-4415-b48f-9ed58d72e771")
 	)
 	(wire
 		(pts
@@ -5947,7 +5953,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "3d188ad7-8ef7-495d-9177-794cd6151052")
+			(uuid "3d188ad7-8ef7-495d-9177-794cd6151053")
 		)
 		(instances
 			(project ""
@@ -6888,7 +6894,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "3d188ad7-8ef7-495d-9177-794cd6151052")
+			(uuid "3d188ad7-8ef7-495d-9177-794cd6151054")
 		)
 		(instances
 			(project ""
@@ -7643,12 +7649,82 @@
 			)
 		)
 		(pin "1"
-			(uuid "3d188ad7-8ef7-495d-9177-794cd6151052")
+			(uuid "3d188ad7-8ef7-495d-9177-794cd6151055")
 		)
 		(instances
 			(project ""
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR028")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R")
+		(at 167.64 95.25 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "d796d830-16b9-4999-8c62-419f80baf2c3")
+		(property "Reference" "R7"
+			(at 170.18 93.9799 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "10K"
+			(at 170.18 96.5199 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 165.862 95.25 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 167.64 95.25 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Resistor"
+			(at 167.64 95.25 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "2"
+			(uuid "b53d7492-a95a-4a19-9b85-c1a4b9342fb8")
+		)
+		(pin "1"
+			(uuid "ebb5b56f-557e-4f4d-93c0-4db634dd58b5")
+		)
+		(instances
+			(project ""
+				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
+					(reference "R7")
 					(unit 1)
 				)
 			)
@@ -7716,6 +7792,72 @@
 			(project ""
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR019")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+3.3V")
+		(at 167.64 91.44 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "dadd6f6c-5d92-4736-ba91-6f3cc97bbe61")
+		(property "Reference" "#PWR029"
+			(at 167.64 95.25 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+3.3V"
+			(at 167.64 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 167.64 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 167.64 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3.3V\""
+			(at 167.64 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "d937f5b3-77ab-47f9-8d95-59033cf9b2d1")
+		)
+		(instances
+			(project ""
+				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
+					(reference "#PWR029")
 					(unit 1)
 				)
 			)
