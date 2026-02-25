@@ -27,6 +27,7 @@ int8_t get_sdcard_intr_gpio(void);
 int8_t get_sdcard_open_file_num_max(void);
 int8_t get_auxin_detect_gpio(void);
 int8_t get_headphone_detect_gpio(void);
+int8_t get_reset_board_gpio(void);
 int8_t get_pa_enable_gpio(void);
 int8_t get_input_rec_id(void);
 int8_t get_input_mode_id(void);
@@ -35,6 +36,16 @@ int8_t get_input_play_id(void);
 int8_t get_input_volup_id(void);
 int8_t get_input_voldown_id(void);
 int8_t get_green_led_gpio(void);
+int8_t get_reset_board_gpio(void);
+
+// Stubs for esp-adf driver compilation
+int get_i2s_mclk_gpio(void);
+int get_i2s_bclk_gpio(void);
+int get_i2s_lrck_gpio(void);
+int get_i2s_dout_gpio(void);
+int get_i2s_din_gpio(void);
+
+int get_es7243_mclk_gpio(void);
 
 #ifdef __cplusplus
 }

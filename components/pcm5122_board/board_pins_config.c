@@ -74,3 +74,13 @@ int8_t get_input_play_id(void) { return -1; }
 int8_t get_input_volup_id(void) { return -1; }
 int8_t get_input_voldown_id(void) { return -1; }
 int8_t get_green_led_gpio(void) { return -1; }
+int8_t get_reset_board_gpio(void) { return -1; }
+
+// Stubs for esp-adf driver compilation
+int get_i2s_mclk_gpio(void) { return -1; }
+int get_i2s_bclk_gpio(void) { return -1; }
+int get_i2s_lrck_gpio(void) { return -1; }
+int get_i2s_dout_gpio(void) { return -1; }
+int get_i2s_din_gpio(void) { return -1; }
+
+int get_es7243_mclk_gpio(void) { return -1; }
