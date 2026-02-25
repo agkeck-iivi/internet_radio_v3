@@ -12,4 +12,4 @@ idf_component_register(SRCS  "internet_radio_adf.c" "audio_pipeline_manager.c" "
                             "encoders.c" "ir_rmt.c"
                        PRIV_REQUIRES esp_wifi nvs_flash wifi_provisioning audio_pipeline audio_stream esp_peripherals esp_driver_rmt esp_http_server spiffs
                        REQUIRES esp_lcd
-                       INCLUDE_DIRS "." "../components/es8388_board")
+                       INCLUDE_DIRS "." "../components/pcm5122_board")
