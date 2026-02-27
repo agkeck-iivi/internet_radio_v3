@@ -5,6 +5,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "i2c_bus.h"
+#include <math.h>
 #include <string.h>
 
 static const char *PCM_TAG = "PCM5122_DRIVER";
@@ -199,17 +200,16 @@ esp_err_t pcm5122_set_voice_volume(int volume) {
 
   ESP_LOGI(PCM_TAG, "Setting volume to %d%%", volume);
 
-  // 100 -> 0dB (0x30 hex / 48 dec)
-  // 0 -> -103dB (0xFF hex / 255 dec)
+  // Map 0-100% to natural logarithmic curve
+  // reg_val = 48 (0dB) + 80 * log10(100/vol)
+  // This maps 50% to ~-12dB, 10% to ~-40dB
   uint8_t reg_val;
-  if (volume == 0) {
-    reg_val = 0xFF; // Muted effectively
+  if (volume <= 0) {
+    reg_val = 255; // Muted
   } else {
-    // Map 1-100 to 0xEF down to 0x30 (approx mapping, 0x30 is 0dB)
-    // Range: 255 - 48 = 207 steps
-    reg_val = (uint8_t)(255 - ((volume * 207) / 100));
-    if (reg_val < 0x30)
-      reg_val = 0x30; // Cap at 0dB to prevent distortion
+    reg_val = (uint8_t)(48 + 80 * log10(100.0 / volume));
+    if (reg_val > 255)
+      reg_val = 255;
   }
 
   esp_err_t res = pcm5122_write_reg(PCM5122_PAGE, 0x00);
