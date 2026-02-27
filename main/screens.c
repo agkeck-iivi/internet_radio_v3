@@ -22,7 +22,7 @@ static lv_obj_t *bitrate_label = NULL;
 static lv_obj_t *callsign_label = NULL;
 static lv_obj_t *origin_label = NULL;
 static lv_obj_t *volume_slider = NULL;
-static lv_obj_t *mute_x_label = NULL;
+static lv_obj_t *mute_m_label = NULL;
 static lv_obj_t *station_roller = NULL;
 
 static lv_obj_t *home_screen_obj = NULL;
@@ -107,14 +107,14 @@ void process_ui_updates(void) {
     case UPDATE_VOLUME:
       if (volume_slider) {
         lv_slider_set_value(volume_slider, msg.data.value, LV_ANIM_ON);
-        // Update Mute X position if it exists and is not hidden
-        if (mute_x_label) {
+        // Update Mute M position if it exists and is not hidden
+        if (mute_m_label) {
           lv_coord_t h = lv_obj_get_height(volume_slider);
           // LVGL sliders are usually 0 at bottom, 100 at top if vertical
           // Center of the filled part is (volume/2)% from bottom
           lv_coord_t y_offset = (h * (100 - msg.data.value / 2)) / 100;
-          lv_obj_set_y(mute_x_label,
-                       y_offset - 8); // -8 to center the 14px label
+          lv_obj_set_y(mute_m_label,
+                       y_offset - 7); // -7 to center the 14px label height
         }
       }
       break;
@@ -157,16 +157,16 @@ void process_ui_updates(void) {
         lv_label_set_text(message_label, msg.data.str_value);
       break;
     case UPDATE_MUTE_STATE:
-      if (mute_x_label) {
+      if (mute_m_label) {
         if (msg.data.value) {
-          lv_obj_remove_flag(mute_x_label, LV_OBJ_FLAG_HIDDEN);
+          lv_obj_remove_flag(mute_m_label, LV_OBJ_FLAG_HIDDEN);
           // Ensure position is correct when showing
           lv_coord_t h = lv_obj_get_height(volume_slider);
           int vol = lv_slider_get_value(volume_slider);
           lv_coord_t y_offset = (h * (100 - vol / 2)) / 100;
-          lv_obj_set_y(mute_x_label, y_offset - 8);
+          lv_obj_set_y(mute_m_label, y_offset - 7);
         } else {
-          lv_obj_add_flag(mute_x_label, LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(mute_m_label, LV_OBJ_FLAG_HIDDEN);
         }
       }
       break;
@@ -205,21 +205,21 @@ static void create_home_screen_widgets(lv_obj_t *parent) {
   lv_obj_set_style_bg_opa(volume_slider, LV_OPA_TRANSP,
                           LV_PART_KNOB); // Hide the knob
 
-  // 1.1 Mute Indicator 'X' (Centered on the filled part of slider)
-  mute_x_label = lv_label_create(parent);
-  lv_label_set_text(mute_x_label, "X");
-  lv_obj_set_style_text_font(mute_x_label, &lv_font_montserrat_14, 0);
-  lv_obj_set_style_text_color(mute_x_label, lv_palette_main(LV_PALETTE_RED), 0);
-  lv_obj_set_style_bg_color(mute_x_label, lv_color_white(), 0);
-  lv_obj_set_style_bg_opa(mute_x_label, LV_OPA_COVER,
+  // 1.1 Mute Indicator 'M' (Centered on the filled part of slider)
+  mute_m_label = lv_label_create(parent);
+  lv_label_set_text(mute_m_label, "M");
+  lv_obj_set_style_text_font(mute_m_label, &lv_font_montserrat_12, 0);
+  lv_obj_set_style_text_color(mute_m_label, lv_palette_main(LV_PALETTE_RED), 0);
+  lv_obj_set_style_bg_color(mute_m_label, lv_color_white(), 0);
+  lv_obj_set_style_bg_opa(mute_m_label, LV_OPA_COVER,
                           0); // Solid background to clear
-  lv_obj_set_style_radius(mute_x_label, 1, 0);
-  lv_obj_set_style_pad_all(mute_x_label, 1, 0); // Padding to clear more area
-  lv_obj_set_size(mute_x_label, slider_width + 4, 16);
-  lv_obj_set_style_text_align(mute_x_label, LV_TEXT_ALIGN_CENTER, 0);
-  lv_obj_align(mute_x_label, LV_ALIGN_TOP_LEFT, -2,
+  lv_obj_set_style_radius(mute_m_label, 1, 0);
+  lv_obj_set_style_pad_all(mute_m_label, 1, 0); // Padding to clear more area
+  lv_obj_set_size(mute_m_label, slider_width + 4, 14);
+  lv_obj_set_style_text_align(mute_m_label, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_align(mute_m_label, LV_ALIGN_TOP_LEFT, -2,
                0); // X coordinate static, Y dynamic
-  lv_obj_add_flag(mute_x_label, LV_OBJ_FLAG_HIDDEN); // Hidden by default
+  lv_obj_add_flag(mute_m_label, LV_OBJ_FLAG_HIDDEN); // Hidden by default
 
   // Restore volume slider to be full height
   lv_obj_set_size(volume_slider, slider_width, screen_height);

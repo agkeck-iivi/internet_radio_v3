@@ -400,6 +400,8 @@ bool is_volume_switch_pressed(void) {
   return gpio_get_level(VOLUME_PRESS_GPIO) == 0;
 }
 
+bool get_mute_state(void) { return is_muted; }
+
 void init_encoders(audio_board_handle_t board_handle, int initial_volume,
                    bool initial_mute, int unmuted_volume) {
   is_muted = initial_mute;

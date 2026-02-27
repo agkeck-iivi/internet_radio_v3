@@ -35,6 +35,12 @@ bool is_volume_switch_pressed(void);
  */
 void sync_station_encoder_index(void);
 
+/**
+ * @brief Get the current user-requested mute state.
+ * @return true if muted, false otherwise.
+ */
+bool get_mute_state(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -108,6 +108,11 @@ void change_station(int new_station_index) {
     return;
   }
 
+  // Mute at start of station change to avoid pops/noise
+  if (board_handle && board_handle->audio_hal) {
+    audio_hal_set_mute(board_handle->audio_hal, true);
+  }
+
   ESP_LOGI(TAG, "Destroying current pipeline...");
   destroy_audio_pipeline(&audio_pipeline_components);
 
@@ -129,11 +134,21 @@ void change_station(int new_station_index) {
         "Failed to create new audio pipeline for station %s, %s. Error: %d",
         radio_stations[current_station].call_sign,
         radio_stations[current_station].origin, ret);
+    // Restore mute state even on failure
+    if (board_handle && board_handle->audio_hal) {
+      audio_hal_set_mute(board_handle->audio_hal, get_mute_state());
+    }
     return;
   }
 
   ESP_LOGI(TAG, "Starting new audio pipeline");
   ret = audio_pipeline_run(audio_pipeline_components.pipeline);
+
+  // Restore mute state after pipeline is started
+  if (board_handle && board_handle->audio_hal) {
+    audio_hal_set_mute(board_handle->audio_hal, get_mute_state());
+  }
+
   if (ret != ESP_OK) {
     ESP_LOGE(TAG, "Failed to run new audio pipeline. Error: %d", ret);
     destroy_audio_pipeline(&audio_pipeline_components);
