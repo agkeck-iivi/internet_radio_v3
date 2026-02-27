@@ -399,9 +399,7 @@ void app_main(void) {
     }
 
     unmuted_volume = initial_volume;
-    if (initial_mute) {
-      initial_volume = 0;
-    }
+    // initial_volume is preserved even if initial_mute is true
 
     nvs_close(nvs_handle);
   }
@@ -560,6 +558,7 @@ void app_main(void) {
   board_handle->audio_hal->audio_codec_ctrl(AUDIO_HAL_CODEC_MODE_BOTH,
                                             AUDIO_HAL_CTRL_START);
   audio_hal_set_volume(board_handle->audio_hal, initial_volume);
+  audio_hal_set_mute(board_handle->audio_hal, initial_mute);
   update_volume_slider(initial_volume);
   // audio_hal_get_volume(board_handle->audio_hal, &temp_volume);
   // ESP_LOGI(TAG, "Initial volume set to %d", temp_volume);
