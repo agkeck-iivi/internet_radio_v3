@@ -9,6 +9,7 @@
 #include "freertos/FreeRTOS.h"
 #include "lvgl.h"
 #include "station_data.h"
+#include <stdlib.h>
 #include <string.h>
 
 extern int g_bitrate_kbps;
@@ -21,6 +22,7 @@ static lv_obj_t *bitrate_label = NULL;
 static lv_obj_t *callsign_label = NULL;
 static lv_obj_t *origin_label = NULL;
 static lv_obj_t *volume_slider = NULL;
+static lv_obj_t *mute_x_label = NULL;
 static lv_obj_t *station_roller = NULL;
 
 static lv_obj_t *home_screen_obj = NULL;
@@ -54,6 +56,10 @@ void update_volume_slider(int volume) {
 void update_station_roller(int new_station_index) {
   ui_update_message_t msg = {.type = UPDATE_STATION_ROLLER,
                              .data.value = new_station_index};
+  xQueueSend(g_ui_queue, &msg, 0);
+}
+void update_mute_state(bool muted) {
+  ui_update_message_t msg = {.type = UPDATE_MUTE_STATE, .data.value = muted};
   xQueueSend(g_ui_queue, &msg, 0);
 }
 
@@ -99,8 +105,18 @@ void process_ui_updates(void) {
         lv_label_set_text(origin_label, msg.data.str_value);
       break;
     case UPDATE_VOLUME:
-      if (volume_slider)
+      if (volume_slider) {
         lv_slider_set_value(volume_slider, msg.data.value, LV_ANIM_ON);
+        // Update Mute X position if it exists and is not hidden
+        if (mute_x_label) {
+          lv_coord_t h = lv_obj_get_height(volume_slider);
+          // LVGL sliders are usually 0 at bottom, 100 at top if vertical
+          // Center of the filled part is (volume/2)% from bottom
+          lv_coord_t y_offset = (h * (100 - msg.data.value / 2)) / 100;
+          lv_obj_set_y(mute_x_label,
+                       y_offset - 8); // -8 to center the 14px label
+        }
+      }
       break;
     case UPDATE_STATION_ROLLER:
       if (station_roller)
@@ -140,6 +156,20 @@ void process_ui_updates(void) {
       if (message_label)
         lv_label_set_text(message_label, msg.data.str_value);
       break;
+    case UPDATE_MUTE_STATE:
+      if (mute_x_label) {
+        if (msg.data.value) {
+          lv_obj_remove_flag(mute_x_label, LV_OBJ_FLAG_HIDDEN);
+          // Ensure position is correct when showing
+          lv_coord_t h = lv_obj_get_height(volume_slider);
+          int vol = lv_slider_get_value(volume_slider);
+          lv_coord_t y_offset = (h * (100 - vol / 2)) / 100;
+          lv_obj_set_y(mute_x_label, y_offset - 8);
+        } else {
+          lv_obj_add_flag(mute_x_label, LV_OBJ_FLAG_HIDDEN);
+        }
+      }
+      break;
     default:
       ESP_LOGW(TAG, "Unknown UI update type: %d", msg.type);
       break;
@@ -154,9 +184,10 @@ static void create_home_screen_widgets(lv_obj_t *parent) {
 
   // 1. Volume Control Slider
   volume_slider = lv_slider_create(parent);
-  lv_coord_t slider_width = 6; // Width of the volume slider
-  lv_obj_set_size(volume_slider, slider_width, screen_height);
-  lv_obj_align(volume_slider, LV_ALIGN_LEFT_MID, 0, 0);
+  lv_coord_t slider_width =
+      8; // Width of the volume slider (slightly wider for X)
+  lv_obj_set_size(volume_slider, slider_width, screen_height - 16);
+  lv_obj_align(volume_slider, LV_ALIGN_BOTTOM_LEFT, 0, 0);
   lv_slider_set_range(volume_slider, 0, 100);
   lv_slider_set_value(volume_slider, 0, LV_ANIM_OFF);
 
@@ -165,10 +196,6 @@ static void create_home_screen_widgets(lv_obj_t *parent) {
   lv_obj_set_style_bg_opa(volume_slider, LV_OPA_COVER, LV_PART_MAIN);
   lv_obj_set_style_bg_color(volume_slider, lv_palette_main(LV_PALETTE_GREY),
                             LV_PART_MAIN);
-  // slider border
-  // lv_obj_set_style_border_width(volume_slider, 1, LV_PART_MAIN);
-  // lv_obj_set_style_border_color(volume_slider, lv_color_black(),
-  // LV_PART_MAIN);
 
   lv_obj_set_style_radius(volume_slider, LV_RADIUS_CIRCLE, LV_PART_INDICATOR);
   lv_obj_set_style_bg_opa(volume_slider, LV_OPA_COVER, LV_PART_INDICATOR);
@@ -177,6 +204,26 @@ static void create_home_screen_widgets(lv_obj_t *parent) {
 
   lv_obj_set_style_bg_opa(volume_slider, LV_OPA_TRANSP,
                           LV_PART_KNOB); // Hide the knob
+
+  // 1.1 Mute Indicator 'X' (Centered on the filled part of slider)
+  mute_x_label = lv_label_create(parent);
+  lv_label_set_text(mute_x_label, "X");
+  lv_obj_set_style_text_font(mute_x_label, &lv_font_montserrat_14, 0);
+  lv_obj_set_style_text_color(mute_x_label, lv_palette_main(LV_PALETTE_RED), 0);
+  lv_obj_set_style_bg_color(mute_x_label, lv_color_white(), 0);
+  lv_obj_set_style_bg_opa(mute_x_label, LV_OPA_COVER,
+                          0); // Solid background to clear
+  lv_obj_set_style_radius(mute_x_label, 1, 0);
+  lv_obj_set_style_pad_all(mute_x_label, 1, 0); // Padding to clear more area
+  lv_obj_set_size(mute_x_label, slider_width + 4, 16);
+  lv_obj_set_style_text_align(mute_x_label, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_align(mute_x_label, LV_ALIGN_TOP_LEFT, -2,
+               0); // X coordinate static, Y dynamic
+  lv_obj_add_flag(mute_x_label, LV_OBJ_FLAG_HIDDEN); // Hidden by default
+
+  // Restore volume slider to be full height
+  lv_obj_set_size(volume_slider, slider_width, screen_height);
+  lv_obj_align(volume_slider, LV_ALIGN_LEFT_MID, 0, 0);
 
   // 2. Volume Percentage Label
   // Make the label a child of the slider for easier positioning relative to it
@@ -302,7 +349,6 @@ void screens_init(lv_display_t *disp) {
   message_screen_obj = lv_obj_create(NULL);
 
   create_home_screen_widgets(home_screen_obj);
-  create_station_selection_screen_widgets(station_selection_screen_obj);
   create_station_selection_screen_widgets(station_selection_screen_obj);
   create_message_screen_widgets(message_screen_obj);
 

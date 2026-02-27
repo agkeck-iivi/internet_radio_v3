@@ -20,7 +20,8 @@ typedef enum {
   SWITCH_TO_PROVISIONING,
   SWITCH_TO_IP_SCREEN,
   SWITCH_TO_REBOOT_SCREEN,
-  UPDATE_IP_LABEL
+  UPDATE_IP_LABEL,
+  UPDATE_MUTE_STATE
 } ui_update_type_t;
 
 typedef struct {
@@ -103,6 +104,7 @@ void update_station_roller(int new_station_index);
  * @param ip The IP address string.
  */
 void update_ip_label(const char *ip);
+void update_mute_state(bool muted);
 
 #ifdef __cplusplus
 }

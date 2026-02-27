@@ -173,6 +173,7 @@ void update_volume_pulse_counter(void *pvParameters) {
       audio_hal_set_mute(counter->board_handle->audio_hal, false);
       is_muted = false;
       ESP_LOGI(TAG, "Unmuted by volume change to %d", new_volume);
+      update_mute_state(false);
       save_mute_state_to_nvs(false);
 
       counter->value = new_volume;
@@ -231,9 +232,11 @@ static void volume_press_task(void *pvParameters) {
 
         if (is_muted) {
           ESP_LOGI(TAG, "Hardware muted");
+          update_mute_state(true);
           save_mute_state_to_nvs(true);
         } else {
           ESP_LOGI(TAG, "Hardware unmuted");
+          update_mute_state(false);
           save_mute_state_to_nvs(false);
         }
       }
@@ -400,6 +403,7 @@ bool is_volume_switch_pressed(void) {
 void init_encoders(audio_board_handle_t board_handle, int initial_volume,
                    bool initial_mute, int unmuted_volume) {
   is_muted = initial_mute;
+  update_mute_state(is_muted);
 
   // ESP_LOGI(TAG, "set glitch filter");
   static pcnt_glitch_filter_config_t filter_config = {
