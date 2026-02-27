@@ -43,3 +43,12 @@ esp_err_t audio_board_mute(bool mute) {
   }
   return audio_hal_set_mute(board_handle->audio_hal, mute);
 }
+
+esp_err_t audio_board_get_mute(bool *mute) {
+  if (board_handle == NULL || board_handle->audio_hal == NULL) {
+    return ESP_ERR_INVALID_STATE;
+  }
+  // We call the driver function directly as it's not in the audio_hal_func_t
+  // struct
+  return pcm5122_get_mute(mute);
+}

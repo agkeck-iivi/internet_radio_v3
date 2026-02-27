@@ -23,6 +23,7 @@
 #include "esp_timer.h"
 #include "internet_radio_adf.h"
 #include "ir_rmt.h"
+#include "pcm5122_driver.h"
 #include "screens.h"
 #include "station_data.h"
 #include <inttypes.h>
@@ -80,7 +81,6 @@ static cyclic_pulse_counter_t *g_station_counter_ptr = NULL;
 
 // Mute functionality state
 static bool is_muted = false;
-static int volume_before_mute = 0;
 static limited_pulse_counter_t *g_volume_counter_ptr =
     NULL; // Pointer to the volume counter for shared access
 
@@ -170,31 +170,12 @@ void update_volume_pulse_counter(void *pvParameters) {
     }
     if (new_volume != counter->value) {
       // If muted and user changes volume, unmute first
-      if (is_muted) {
-        // Calculate the 'delta' applied by the encoder
-        int delta = new_volume - counter->value;
-        // Restore based on previous volume plus the delta
-        new_volume = volume_before_mute + delta;
-
-        // Clamp restored volume to 0-100 range
-        if (new_volume < 0) {
-          new_volume = 0;
-        } else if (new_volume > 100) {
-          new_volume = 100;
-        }
-
-        // Correct the adjust value so that future 'new_volume' calculations
-        // from the hardware counter match this restored volume.
-        counter->adjust = new_volume - (count / 4 * counter->speed);
-
-        is_muted = false;
-        ESP_LOGI(TAG, "Unmuted by volume change to %d (restored from %d)",
-                 new_volume, volume_before_mute);
-        save_mute_state_to_nvs(false);
-      }
+      audio_hal_set_mute(counter->board_handle->audio_hal, false);
+      is_muted = false;
+      ESP_LOGI(TAG, "Unmuted by volume change to %d", new_volume);
+      save_mute_state_to_nvs(false);
 
       counter->value = new_volume;
-      ESP_LOGI(TAG, "Setting volume to: %d", new_volume);
       audio_hal_set_volume(counter->board_handle->audio_hal, new_volume);
       update_volume_slider(new_volume);
       save_volume_to_nvs(new_volume);
@@ -245,37 +226,20 @@ static void volume_press_task(void *pvParameters) {
       } else {
         // Timeout reached, no second click -> Single Click Action (Mute Toggle)
         is_muted = !is_muted; // Toggle mute state
+        audio_hal_set_mute(g_volume_counter_ptr->board_handle->audio_hal,
+                           is_muted);
 
         if (is_muted) {
-          ESP_LOGI(TAG, "Muting volume");
-          // Save current volume and mute
-          if (g_volume_counter_ptr) {
-            volume_before_mute = g_volume_counter_ptr->value;
-          }
-          audio_hal_set_volume(g_volume_counter_ptr->board_handle->audio_hal,
-                               0);
-          update_volume_slider(0);
+          ESP_LOGI(TAG, "Hardware muted");
           save_mute_state_to_nvs(true);
         } else {
-          ESP_LOGI(TAG, "Unmuting volume to %d", volume_before_mute);
-          // Restore volume
-          if (g_volume_counter_ptr) {
-            // Sync counter state with the restored volume
-            g_volume_counter_ptr->value = volume_before_mute;
-            g_volume_counter_ptr->adjust = volume_before_mute;
-            pcnt_unit_clear_count(g_volume_counter_ptr->pcnt_unit);
-
-            audio_hal_set_volume(g_volume_counter_ptr->board_handle->audio_hal,
-                                 volume_before_mute);
-            update_volume_slider(volume_before_mute);
-            save_volume_to_nvs(volume_before_mute);
-            save_mute_state_to_nvs(false);
-          }
+          ESP_LOGI(TAG, "Hardware unmuted");
+          save_mute_state_to_nvs(false);
         }
       }
-      // Debounce after everything
-      vTaskDelay(pdMS_TO_TICKS(50));
     }
+    // Debounce after everything
+    vTaskDelay(pdMS_TO_TICKS(50));
     vTaskDelay(pdMS_TO_TICKS(VOLUME_PRESS_POLLING_PERIOD_MS));
   }
 }
@@ -436,7 +400,6 @@ bool is_volume_switch_pressed(void) {
 void init_encoders(audio_board_handle_t board_handle, int initial_volume,
                    bool initial_mute, int unmuted_volume) {
   is_muted = initial_mute;
-  volume_before_mute = unmuted_volume;
 
   // ESP_LOGI(TAG, "set glitch filter");
   static pcnt_glitch_filter_config_t filter_config = {
@@ -508,7 +471,7 @@ void init_encoders(audio_board_handle_t board_handle, int initial_volume,
   xTaskCreate(update_volume_pulse_counter, "update_volume_pulse_counter",
               4 * 1024, volume_counter, 5, NULL);
 
-  xTaskCreate(volume_press_task, "volume_press_task", 2048, NULL, 5, NULL);
+  xTaskCreate(volume_press_task, "volume_press_task", 6144, NULL, 5, NULL);
 
   // *********************  station encoder  **********************
   static gpio_config_t station_encoder_gpio_config = {
@@ -565,5 +528,5 @@ void init_encoders(audio_board_handle_t board_handle, int initial_volume,
   xTaskCreate(update_station_select_pulse_counter,
               "update_station_select_pulse_counter", 4 * 1024,
               g_station_counter_ptr, 5, NULL);
-  xTaskCreate(station_press_task, "station_press_task", 3 * 1024, NULL, 5, NULL);
+  xTaskCreate(station_press_task, "station_press_task", 4096, NULL, 5, NULL);
 }

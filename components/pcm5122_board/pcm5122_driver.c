@@ -2,6 +2,8 @@
 #include "audio_volume.h"
 #include "board.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "i2c_bus.h"
 #include <string.h>
 
@@ -33,7 +35,7 @@ audio_hal_func_t MY_AUDIO_CODEC_PCM5122_DEFAULT_HANDLE = {
     .audio_codec_deinitialize = pcm5122_deinit,
     .audio_codec_ctrl = pcm5122_ctrl_state,
     .audio_codec_config_iface = pcm5122_config_i2s,
-    .audio_codec_set_mute = pcm5122_set_voice_mute,
+    .audio_codec_set_mute = pcm5122_set_mute,
     .audio_codec_set_volume = pcm5122_set_voice_volume,
     .audio_codec_get_volume = pcm5122_get_voice_volume,
     .audio_codec_enable_pa = pcm5122_pa_power,
@@ -72,21 +74,64 @@ esp_err_t pcm5122_init(audio_hal_codec_config_t *cfg) {
   int res = 0;
 
   res = i2c_init();
+  if (res != ESP_OK)
+    return res;
 
-  // Basic init sequence for PCM5122 (Wake up from standby)
+  // Robust Initialization Sequence inspired by Adafruit library
+  ESP_LOGI(PCM_TAG, "Performing robust initialization...");
+
   res |= pcm5122_write_reg(PCM5122_PAGE, 0x00);    // Page 0
-  res |= pcm5122_write_reg(PCM5122_STANDBY, 0x00); // Wake up
-  res |= pcm5122_write_reg(PCM5122_MUTE, 0x00);    // Unmute
+  res |= pcm5122_write_reg(PCM5122_STANDBY, 0x10); // Enter Standby (RQST bit)
+
+  // Reset Registers
+  res |= pcm5122_write_reg(PCM5122_RESET, 0x01);
+  uint8_t reset_state = 1;
+  for (int i = 0; i < 10 && reset_state != 0; i++) {
+    vTaskDelay(pdMS_TO_TICKS(10));
+    pcm_read_reg(PCM5122_RESET, &reset_state);
+    reset_state &= 0x01;
+  }
+
+  // Reset Modules
+  res |= pcm5122_write_reg(PCM5122_RESET, 0x10);
+  reset_state = 0x10;
+  for (int i = 0; i < 10 && reset_state != 0; i++) {
+    vTaskDelay(pdMS_TO_TICKS(10));
+    pcm_read_reg(PCM5122_RESET, &reset_state);
+    reset_state &= 0x10;
+  }
+
+  // Exit Standby and Powerdown
+  res |= pcm5122_write_reg(PCM5122_STANDBY, 0x00);
+
+  // Configure clock inference and error ignore
+  // Reg 37 (0x25): Ignore FS, BCK, SCK, PLL, Clock Halt errors
+  res |= pcm5122_write_reg(PCM5122_ERROR_DETECT, 0x7D);
+
+  // Explicitly enable PLL and set BCK as reference
+  res |= pcm5122_write_reg(PCM5122_PLL_EN, 0x01); // Enable PLL
+  res |=
+      pcm5122_write_reg(PCM5122_PLL_REF, PCM5122_PLL_REF_BCK); // PLL Ref = BCK
+  res |= pcm5122_write_reg(PCM5122_DAC_CLK_SRC,
+                           PCM5122_DAC_CLK_PLL); // DAC Src = PLL
 
   // Configure I2S based on cfg
   res |= pcm5122_config_i2s(cfg->codec_mode, &cfg->i2s_iface);
 
-  // Set default volume
+  // Disable Auto Mute
+  res |= pcm5122_write_reg(PCM5122_AUTO_MUTE, 0x00);
+
+  // Set default volume and initial unmute
   codec_dac_volume_config_t vol_cfg = PCM5122_DAC_VOL_CFG_DEFAULT();
   dac_vol_handle = audio_codec_volume_init(&vol_cfg);
-  pcm5122_set_voice_volume(80); // Set a reasonable default
+  pcm5122_set_voice_volume(80);
+  pcm5122_set_mute(false);
 
-  ESP_LOGI(PCM_TAG, "PCM5122 init complete");
+  if (res != ESP_OK) {
+    ESP_LOGE(PCM_TAG, "PCM5122 init failed");
+  } else {
+    ESP_LOGI(PCM_TAG, "PCM5122 init complete (v3.6 - Adafruit-style Init)");
+  }
   return res == 0 ? ESP_OK : ESP_FAIL;
 }
 
@@ -108,12 +153,10 @@ esp_err_t pcm5122_ctrl_state(audio_hal_codec_mode_t mode,
 
   if (ctrl_state == AUDIO_HAL_CTRL_STOP) {
     // Soft mute
-    pcm5122_write_reg(PCM5122_PAGE, 0x00);
-    pcm5122_write_reg(PCM5122_MUTE, 0x11);
+    pcm5122_set_mute(true);
   } else {
     // Unmute
-    pcm5122_write_reg(PCM5122_PAGE, 0x00);
-    pcm5122_write_reg(PCM5122_MUTE, 0x00);
+    pcm5122_set_mute(false);
   }
   return ESP_OK;
 }
@@ -142,42 +185,55 @@ esp_err_t pcm5122_config_i2s(audio_hal_codec_mode_t mode,
     format_val |= 0x02;
   }
 
-  esp_err_t res = pcm5122_write_reg(PCM5122_BCK_LRCK_CFG, format_val);
+  esp_err_t res = pcm5122_write_reg(PCM5122_I2S_CONFIG, format_val);
   return res;
 }
 
 // PCM5122 volume goes from 0x00 (+24dB) to 0xFF (-103dB) in 0.5dB steps
 // Let's implement a simple 0-100 linear mapping for now
 esp_err_t pcm5122_set_voice_volume(int volume) {
-  esp_err_t res = ESP_OK;
   if (volume < 0)
     volume = 0;
   if (volume > 100)
     volume = 100;
 
+  ESP_LOGI(PCM_TAG, "Setting volume to %d%%", volume);
+
   // 100 -> 0dB (0x30 hex / 48 dec)
   // 0 -> -103dB (0xFF hex / 255 dec)
-  // Simple mapping: Inverse relation
   uint8_t reg_val;
   if (volume == 0) {
     reg_val = 0xFF; // Muted effectively
   } else {
-    // Map 1-100 to 0xEF down to 0x30 (approx mapping, 0x30 is 0dB, we probably
-    // don't want positive gain) Range is roughly 255 (mute) to 48 (0db) -> 207
-    // steps
+    // Map 1-100 to 0xEF down to 0x30 (approx mapping, 0x30 is 0dB)
+    // Range: 255 - 48 = 207 steps
     reg_val = (uint8_t)(255 - ((volume * 207) / 100));
     if (reg_val < 0x30)
       reg_val = 0x30; // Cap at 0dB to prevent distortion
   }
 
-  res |= pcm5122_write_reg(PCM5122_PAGE, 0x00);
-  res |= pcm5122_write_reg(PCM5122_VOL_L, reg_val);
-  res |= pcm5122_write_reg(PCM5122_VOL_R, reg_val);
+  esp_err_t res = pcm5122_write_reg(PCM5122_PAGE, 0x00);
+  if (res != ESP_OK)
+    return res;
+
+  res = pcm5122_write_reg(PCM5122_VOL_L, reg_val);
+  if (res != ESP_OK) {
+    ESP_LOGE(PCM_TAG, "Failed to set Left Volume: %s", esp_err_to_name(res));
+    return res;
+  }
+
+  res = pcm5122_write_reg(PCM5122_VOL_R, reg_val);
+  if (res != ESP_OK) {
+    ESP_LOGE(PCM_TAG, "Failed to set Right Volume: %s", esp_err_to_name(res));
+    return res;
+  }
 
   if (dac_vol_handle) {
     dac_vol_handle->user_volume = volume;
   }
 
+  ESP_LOGI(PCM_TAG, "Volume set successfully to %d%% (reg: 0x%02X)", volume,
+           reg_val);
   return res;
 }
 
@@ -190,16 +246,29 @@ esp_err_t pcm5122_get_voice_volume(int *volume) {
   return ESP_FAIL;
 }
 
-esp_err_t pcm5122_set_voice_mute(bool enable) {
+esp_err_t pcm5122_set_mute(bool enable) {
+  ESP_LOGI(PCM_TAG, "Setting hardware mute: %s", enable ? "ON" : "OFF");
   esp_err_t res = pcm5122_write_reg(PCM5122_PAGE, 0x00);
-  if (enable) {
-    res |= pcm5122_write_reg(PCM5122_MUTE, 0x11);
-  } else {
-    res |= pcm5122_write_reg(PCM5122_MUTE, 0x00);
+  if (res != ESP_OK)
+    return res;
+  // Reg 0x06: Bits 0 (Left) and 4 (Right)
+  res = pcm5122_write_reg(PCM5122_MUTE, enable ? 0x11 : 0x00);
+  if (res != ESP_OK) {
+    ESP_LOGE(PCM_TAG, "Failed to set mute: %s", esp_err_to_name(res));
   }
   return res;
 }
 
-esp_err_t pcm5122_get_voice_mute(void) { return ESP_OK; }
+esp_err_t pcm5122_get_mute(bool *mute) {
+  uint8_t data;
+  pcm5122_write_reg(PCM5122_PAGE, 0x00);
+  esp_err_t res = pcm_read_reg(PCM5122_MUTE, &data);
+  if (res == ESP_OK) {
+    // PCM5122_MUTE (Reg 3): Bit 4 is for Right, Bit 0 for Left
+    // 1: Mute, 0: Unmute
+    *mute = (data & 0x11) != 0;
+  }
+  return res;
+}
 
 esp_err_t pcm5122_pa_power(bool enable) { return ESP_OK; }
