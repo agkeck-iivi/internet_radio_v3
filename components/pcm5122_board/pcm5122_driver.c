@@ -125,7 +125,12 @@ esp_err_t pcm5122_init(audio_hal_codec_config_t *cfg) {
   // Set default volume and initial unmute
   codec_dac_volume_config_t vol_cfg = PCM5122_DAC_VOL_CFG_DEFAULT();
   dac_vol_handle = audio_codec_volume_init(&vol_cfg);
-  pcm5122_set_voice_volume(80);
+  // Set ramp rates: Fast Down (4dB/step at 1fs), Smooth Up (0.5dB/step at 1fs)
+  uint8_t ramp_cfg =
+      PCM5122_RAMP_UP_CONFIG(PCM5122_RAMP_FREQ_1FS, PCM5122_RAMP_STEP_0_5DB) |
+      PCM5122_RAMP_DN_CONFIG(PCM5122_RAMP_FREQ_1FS, PCM5122_RAMP_STEP_4DB);
+  pcm5122_set_ramp_rate(ramp_cfg);
+
   pcm5122_set_mute(false);
 
   if (res != ESP_OK) {
@@ -267,6 +272,18 @@ esp_err_t pcm5122_get_mute(bool *mute) {
     // PCM5122_MUTE (Reg 3): Bit 4 is for Right, Bit 0 for Left
     // 1: Mute, 0: Unmute
     *mute = (data & 0x11) != 0;
+  }
+  return res;
+}
+
+esp_err_t pcm5122_set_ramp_rate(uint8_t config_val) {
+  ESP_LOGI(PCM_TAG, "Setting digital volume ramp rate: 0x%02X", config_val);
+  esp_err_t res = pcm5122_write_reg(PCM5122_PAGE, 0x00);
+  if (res != ESP_OK)
+    return res;
+  res = pcm5122_write_reg(PCM5122_DIGITAL_VOL_RAMP, config_val);
+  if (res != ESP_OK) {
+    ESP_LOGE(PCM_TAG, "Failed to set ramp rate: %s", esp_err_to_name(res));
   }
   return res;
 }
