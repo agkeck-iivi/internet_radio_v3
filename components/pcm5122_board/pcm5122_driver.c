@@ -125,9 +125,9 @@ esp_err_t pcm5122_init(audio_hal_codec_config_t *cfg) {
   // Set default volume and initial unmute
   codec_dac_volume_config_t vol_cfg = PCM5122_DAC_VOL_CFG_DEFAULT();
   dac_vol_handle = audio_codec_volume_init(&vol_cfg);
-  // Set ramp rates: Fast Down (4dB/step at 1fs), Smooth Up (0.5dB/step at 1fs)
+  // Set ramp rates: Fast Down (4dB/step at 1fs), Smooth Up (0.5dB/step at 8fs)
   uint8_t ramp_cfg =
-      PCM5122_RAMP_UP_CONFIG(PCM5122_RAMP_FREQ_1FS, PCM5122_RAMP_STEP_0_5DB) |
+      PCM5122_RAMP_UP_CONFIG(PCM5122_RAMP_FREQ_8FS, PCM5122_RAMP_STEP_0_5DB) |
       PCM5122_RAMP_DN_CONFIG(PCM5122_RAMP_FREQ_1FS, PCM5122_RAMP_STEP_4DB);
   pcm5122_set_ramp_rate(ramp_cfg);
 
