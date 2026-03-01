@@ -102,6 +102,24 @@ esp_err_t pcm5122_init(audio_hal_codec_config_t *cfg) {
     reset_state &= 0x10;
   }
 
+  // Configure Analog Gain (Attenuation) WHILE IN STANDBY
+  // PCM5122 manual software analog gain is only 0dB or -6dB
+  // Control is on Page 1, Register 2: Bit 4 (LAGN), Bit 0 (RAGN)
+  // 0 = 0dB (2Vrms), 1 = -6dB (1Vrms)
+  res |= pcm5122_write_reg(PCM5122_PAGE, 0x01); // Switch to Page 1
+  uint8_t atten_val =
+      (BOARD_ANALOG_ATTENUATION == PCM5122_ATTEN_6DB) ? 0x11 : 0x00;
+  res |= pcm5122_write_reg(0x02, atten_val);
+
+  // Verification read-back
+  uint8_t read_back = 0;
+  pcm_read_reg(0x02, &read_back);
+  ESP_LOGI(PCM_TAG,
+           "Analog gain register (P1, R2) set to 0x%02X (Readback: 0x%02X)",
+           atten_val, read_back);
+
+  res |= pcm5122_write_reg(PCM5122_PAGE, 0x00); // Switch back to Page 0
+
   // Exit Standby and Powerdown
   res |= pcm5122_write_reg(PCM5122_STANDBY, 0x00);
 
@@ -118,6 +136,10 @@ esp_err_t pcm5122_init(audio_hal_codec_config_t *cfg) {
 
   // Configure I2S based on cfg
   res |= pcm5122_config_i2s(cfg->codec_mode, &cfg->i2s_iface);
+
+  // Ensure volume linkage is disabled
+  // Reg 60 (0x3C): Bits 1:0 = 00 (Independent)
+  res |= pcm5122_write_reg(PCM5122_DIGITAL_VOL_CTRL, 0x00);
 
   // Disable Auto Mute
   res |= pcm5122_write_reg(PCM5122_AUTO_MUTE, 0x00);
@@ -136,7 +158,7 @@ esp_err_t pcm5122_init(audio_hal_codec_config_t *cfg) {
   if (res != ESP_OK) {
     ESP_LOGE(PCM_TAG, "PCM5122 init failed");
   } else {
-    ESP_LOGI(PCM_TAG, "PCM5122 init complete (v3.6 - Adafruit-style Init)");
+    ESP_LOGI(PCM_TAG, "PCM5122 init complete (v3.8 - Standby-phase Analog)");
   }
   return res == 0 ? ESP_OK : ESP_FAIL;
 }

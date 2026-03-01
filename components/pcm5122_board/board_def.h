@@ -32,9 +32,22 @@
 #define RECORD_HARDWARE_AEC (false)
 #define BOARD_PA_GAIN (10)
 
+typedef enum {
+  PCM5122_ATTEN_0DB = 0, // 2Vrms (0dB analog gain)
+  PCM5122_ATTEN_6DB = 1, // 1Vrms (-6dB analog gain)
+} pcm5122_analog_atten_t;
+
+// --- ANALOG ATTENUATION CONFIGURATION ---
+// PCM5122 software analog attenuation is limited to 0dB or -6dB.
+// Uncomment the desired setting for A/B testing:
+// #define BOARD_ANALOG_ATTENUATION PCM5122_ATTEN_0DB // 2Vrms (No attenuation)
+#define BOARD_ANALOG_ATTENUATION PCM5122_ATTEN_6DB  // 1Vrms (-6dB
+// attenuation)
+
 #define AUDIO_ADC_INPUT_CH_FORMAT "N"
 
 extern audio_hal_func_t MY_AUDIO_CODEC_PCM5122_DEFAULT_HANDLE;
+
 #define AUDIO_CODEC_DEFAULT_CONFIG()                                           \
   {                                                                            \
       .adc_input = AUDIO_HAL_ADC_INPUT_LINE1,                                  \
