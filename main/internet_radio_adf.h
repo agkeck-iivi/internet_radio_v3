@@ -20,6 +20,11 @@ void change_station(int new_station_index);
 void reset_watchdog_counter(void);
 
 /**
+ * @brief Resets the 10-second throughput moving average history.
+ */
+void reset_throughput_history(void);
+
+/**
  * @brief Waits for the Wi-Fi connection to be established.
  */
 void wait_for_wifi_connection(void);

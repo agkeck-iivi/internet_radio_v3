@@ -29,6 +29,7 @@
 #include "nvs_flash.h"
 #include "screens.h"
 // #include "sdkconfig.h"
+#include "internet_radio_adf.h"
 #include "station_data.h"
 #include "web_server.h"
 #include "wifi_provisioning/manager.h"
@@ -63,6 +64,10 @@ typedef struct {
 } wifi_resume_state_t;
 
 static wifi_resume_state_t g_wifi_resume_state = {0};
+
+#define BITRATE_HISTORY_SIZE 10
+static int g_bitrate_history[BITRATE_HISTORY_SIZE] = {0};
+static int g_history_index = 0;
 
 static audio_board_handle_t board_handle =
     NULL; // make this global during debugging
@@ -154,6 +159,7 @@ void change_station(int new_station_index) {
   }
 
   ESP_LOGI(TAG, "Starting new audio pipeline");
+  reset_throughput_history();
   ret = audio_pipeline_run(audio_pipeline_components.pipeline);
 
   // Restore mute state after pipeline is started
@@ -288,10 +294,6 @@ static void get_device_service_name(char *service_name, size_t max) {
  * @brief Task to measure and log the data throughput in kbps.
  */
 static void data_throughput_task(void *pvParameters) {
-#define BITRATE_HISTORY_SIZE 10
-  static int bitrate_history[BITRATE_HISTORY_SIZE] = {0};
-  static int history_index = 0;
-
   uint64_t last_bytes_read = 0;
 
   uint64_t current_bytes_read;
@@ -311,16 +313,16 @@ static void data_throughput_task(void *pvParameters) {
     // Calculate current bitrate and add to history
     int current_bitrate =
         (bytes_read_in_interval * 8) / BITRATE_UPDATE_INTERVAL_MS;
-    bitrate_history[history_index] = current_bitrate;
-    history_index = (history_index + 1) % BITRATE_HISTORY_SIZE;
+    g_bitrate_history[g_history_index] = current_bitrate;
+    g_history_index = (g_history_index + 1) % BITRATE_HISTORY_SIZE;
 
     // Calculate weighted moving average
     long weighted_sum = 0;
     int total_weight = 0;
     for (int i = 0; i < BITRATE_HISTORY_SIZE; i++) {
       int weight = i + 1; // Simple linear weight (1 for oldest, 10 for newest)
-      int data_index = (history_index + i) % BITRATE_HISTORY_SIZE;
-      weighted_sum += bitrate_history[data_index] * weight;
+      int data_index = (g_history_index + i) % BITRATE_HISTORY_SIZE;
+      weighted_sum += g_bitrate_history[data_index] * weight;
       total_weight += weight;
     }
 
@@ -401,6 +403,12 @@ static void data_throughput_task(void *pvParameters) {
 void reset_watchdog_counter(void) {
   g_consecutive_zero_count = 0;
   ESP_LOGI(TAG, "Watchdog counter reset");
+}
+
+void reset_throughput_history(void) {
+  memset(g_bitrate_history, 0, sizeof(g_bitrate_history));
+  g_history_index = 0;
+  ESP_LOGI(TAG, "Throughput history reset");
 }
 
 void wait_for_wifi_connection(void) {
@@ -717,6 +725,7 @@ void app_main(void) {
   }
 
   ESP_LOGI(TAG, "Start audio_pipeline");
+  reset_throughput_history();
   audio_pipeline_run(audio_pipeline_components.pipeline);
 
   xTaskCreate(data_throughput_task, "data_throughput_task", 3 * 1024, NULL, 5,

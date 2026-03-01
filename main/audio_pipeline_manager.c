@@ -8,6 +8,7 @@
 #include "flac_decoder.h"
 #include "http_stream.h"
 #include "i2s_stream.h"
+#include "internet_radio_adf.h"
 #include "mp3_decoder.h"
 #include "ogg_decoder.h"
 #include <string.h>
@@ -304,5 +305,6 @@ audio_pipeline_manager_wakeup(audio_pipeline_components_t *components) {
   }
 
   // Re-run the pipeline
+  reset_throughput_history();
   return audio_pipeline_run(components->pipeline);
 }
