@@ -14,8 +14,9 @@
 #include "freertos/task.h"
 
 #include "audio_hal.h"
-// #include "esp_sleep.h"
+#include "esp_sleep.h"
 #include "nvs_flash.h" // this is needed even though linter suggests otherwise
+
 #include <limits.h>
 
 #include "board.h"
@@ -23,6 +24,7 @@
 #include "esp_timer.h"
 #include "internet_radio_adf.h"
 #include "ir_rmt.h"
+#include "lvgl_ssd1306_setup.h"
 #include "pcm5122_driver.h"
 #include "screens.h"
 #include "station_data.h"
@@ -35,6 +37,7 @@ static const char *TAG = "encoders";
 extern int station_count;
 extern int current_station;
 extern rmt_channel_handle_t g_ir_tx_channel;
+extern audio_pipeline_components_t audio_pipeline_components;
 
 #define VOLUME_GPIO_A 42
 #define VOLUME_GPIO_B 2
@@ -62,6 +65,8 @@ extern rmt_channel_handle_t g_ir_tx_channel;
 #define REBOOT_MESSAGE_DISPLAY_TIME_MS 100
 // Time window to detect a second click for double-click actions
 #define DOUBLE_CLICK_TIMEOUT_MS 300
+// Delay before entering light sleep when muted (10 minutes)
+#define LIGHT_SLEEP_DELAY_MS 10000
 
 typedef struct {
   pcnt_unit_handle_t pcnt_unit;
@@ -81,6 +86,7 @@ static cyclic_pulse_counter_t *g_station_counter_ptr = NULL;
 
 // Mute functionality state
 static bool is_muted = false;
+static int64_t mute_start_time = 0;
 static limited_pulse_counter_t *g_volume_counter_ptr =
     NULL; // Pointer to the volume counter for shared access
 
@@ -234,6 +240,7 @@ static void volume_press_task(void *pvParameters) {
           ESP_LOGI(TAG, "Hardware muted");
           update_mute_state(true);
           save_mute_state_to_nvs(true);
+          mute_start_time = esp_timer_get_time();
         } else {
           ESP_LOGI(TAG, "Hardware unmuted");
           update_mute_state(false);
@@ -241,7 +248,57 @@ static void volume_press_task(void *pvParameters) {
         }
       }
     }
+
+    // Check for light sleep timeout if muted
+    if (is_muted) {
+      int64_t now = esp_timer_get_time();
+      if (now - mute_start_time > (int64_t)LIGHT_SLEEP_DELAY_MS * 1000) {
+        ESP_LOGI(TAG, "Muted for >%d seconds. Entering light sleep...",
+                 LIGHT_SLEEP_DELAY_MS / 1000);
+
+        // Disconnect WiFi before sleep to bypass bcn_timeout on wakeup
+        set_wifi_sleep_mode(true);
+
+        // Enter sleep (logic inside audio_pipeline_manager.c)
+        audio_pipeline_manager_sleep(&audio_pipeline_components,
+                                     VOLUME_PRESS_GPIO);
+
+        // --- AFTER WAKEUP ---
+        ESP_LOGI(TAG, "Resuming from light sleep...");
+
+        // Trigger reconnection immediately (non-blocking)
+        set_wifi_sleep_mode(false);
+
+        // Wake up display immediately for user feedback
+        lvgl_ssd1306_wakeup();
+
+        // Wait for wifi before restarting pipeline
+        wait_for_wifi_connection();
+
+        // Brief delay to let network stack settle
+        vTaskDelay(pdMS_TO_TICKS(100));
+
+        // Restart pipeline
+        audio_pipeline_manager_wakeup(&audio_pipeline_components);
+
+        // Reset watchdog to avoid spurious restarts
+        reset_watchdog_counter();
+
+        // Hardware is still muted from before sleep, but we might want to stay
+        // muted the user said: "The light sleep state should be awakened by a
+        // press on the volume switch along with unmuting." So we unmute on
+        // wakeup.
+        is_muted = false;
+        audio_hal_set_mute(g_volume_counter_ptr->board_handle->audio_hal,
+                           is_muted);
+        update_mute_state(is_muted);
+        save_mute_state_to_nvs(is_muted);
+        ESP_LOGI(TAG, "Hardware unmuted after wakeup");
+      }
+    }
+
     // Debounce after everything
+
     vTaskDelay(pdMS_TO_TICKS(50));
     vTaskDelay(pdMS_TO_TICKS(VOLUME_PRESS_POLLING_PERIOD_MS));
   }

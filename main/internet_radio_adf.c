@@ -53,6 +53,16 @@ static lv_display_t *display;
 // global variables for easier access in callbacks
 audio_pipeline_components_t audio_pipeline_components = {0};
 int current_station = 0;
+static bool g_is_sleeping = false;
+
+typedef struct {
+  esp_netif_ip_info_t ip_info;
+  uint8_t bssid[6];
+  uint8_t channel;
+  bool has_state;
+} wifi_resume_state_t;
+
+static wifi_resume_state_t g_wifi_resume_state = {0};
 
 static audio_board_handle_t board_handle =
     NULL; // make this global during debugging
@@ -63,7 +73,9 @@ rmt_channel_handle_t g_ir_tx_channel = NULL;
 volatile int g_bitrate_kbps = 0;
 // system monitor logging enable
 static bool g_enable_sys_monitor = false;
+static int g_consecutive_zero_count = 0;
 // Button Handles
+
 static EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
 
@@ -197,13 +209,60 @@ static void event_handler(void *arg, esp_event_base_t event_base,
     }
   } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
     esp_wifi_connect();
+  } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED) {
+    wifi_event_sta_connected_t *event =
+        (wifi_event_sta_connected_t *)event_data;
+    memcpy(g_wifi_resume_state.bssid, event->bssid, 6);
+    g_wifi_resume_state.channel = event->channel;
+    ESP_LOGI(
+        TAG,
+        "Captured WiFi state: BSSID %02x:%02x:%02x:%02x:%02x:%02x, Channel %d",
+        g_wifi_resume_state.bssid[0], g_wifi_resume_state.bssid[1],
+        g_wifi_resume_state.bssid[2], g_wifi_resume_state.bssid[3],
+        g_wifi_resume_state.bssid[4], g_wifi_resume_state.bssid[5],
+        g_wifi_resume_state.channel);
   } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
     ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
     ESP_LOGI(TAG, "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
+
+    // Cache the IP info for Strategy V3 (DHCP Caching)
+    g_wifi_resume_state.ip_info = event->ip_info;
+    g_wifi_resume_state.has_state = true;
+
     xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
   } else if (event_base == WIFI_EVENT &&
              event_id == WIFI_EVENT_STA_DISCONNECTED) {
-    ESP_LOGI(TAG, "Disconnected. Connecting to the AP again...");
+    wifi_event_sta_disconnected_t *event =
+        (wifi_event_sta_disconnected_t *)event_data;
+    ESP_LOGI(TAG, "Disconnected. Reason: %d. Connecting to the AP again...",
+             event->reason);
+    xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
+
+    if (g_is_sleeping) {
+      ESP_LOGI(TAG, "Skipping reconnect because g_is_sleeping=true");
+      return;
+    }
+
+    // Fallback logic for Strategy V3 (DHCP Caching)
+    if (g_wifi_resume_state.has_state) {
+      ESP_LOGW(TAG, "WiFi Resume failed or connection dropped. Falling back to "
+                    "full DHCP...");
+      g_wifi_resume_state.has_state = false; // Disable resume for next try
+
+      esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+      if (netif) {
+        esp_netif_dhcpc_start(netif);
+      }
+
+      // Reset WiFi config to normal scan
+      wifi_config_t sta_cfg;
+      esp_wifi_get_config(WIFI_IF_STA, &sta_cfg);
+      sta_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+      sta_cfg.sta.bssid_set = false;
+      sta_cfg.sta.channel = 0;
+      esp_wifi_set_config(WIFI_IF_STA, &sta_cfg);
+    }
+
     esp_wifi_connect();
   }
 }
@@ -212,6 +271,7 @@ static void wifi_init_sta(void) {
   /* Start Wi-Fi in station mode */
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
   ESP_ERROR_CHECK(esp_wifi_start());
+  ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
 }
 
 static void get_device_service_name(char *service_name, size_t max) {
@@ -231,9 +291,9 @@ static void data_throughput_task(void *pvParameters) {
 #define BITRATE_HISTORY_SIZE 10
   static int bitrate_history[BITRATE_HISTORY_SIZE] = {0};
   static int history_index = 0;
-  static int consecutive_zero_count = 0;
 
   uint64_t last_bytes_read = 0;
+
   uint64_t current_bytes_read;
   uint64_t bytes_read_in_interval;
 
@@ -281,10 +341,12 @@ static void data_throughput_task(void *pvParameters) {
     if (g_enable_sys_monitor) {
       // Core Load Monitoring
       TaskStatus_t status;
-      vTaskGetInfo(xTaskGetIdleTaskHandleForCPU(0), &status, pdFALSE, eInvalid);
+      vTaskGetInfo(xTaskGetIdleTaskHandleForCore(0), &status, pdFALSE,
+                   eInvalid);
       uint64_t idle_0 = status.ulRunTimeCounter;
 
-      vTaskGetInfo(xTaskGetIdleTaskHandleForCPU(1), &status, pdFALSE, eInvalid);
+      vTaskGetInfo(xTaskGetIdleTaskHandleForCore(1), &status, pdFALSE,
+                   eInvalid);
       uint64_t idle_1 = status.ulRunTimeCounter;
 
       uint64_t current_total_time = esp_timer_get_time();
@@ -322,12 +384,13 @@ static void data_throughput_task(void *pvParameters) {
 
     // Watchdog check
     if (current_bitrate == 0) {
-      consecutive_zero_count++;
+      g_consecutive_zero_count++;
     } else {
-      consecutive_zero_count = 0;
+      g_consecutive_zero_count = 0;
     }
 
-    if (consecutive_zero_count >= 30) {
+    if (g_consecutive_zero_count >= 30) {
+
       ESP_LOGE(TAG, "Watchdog triggered: 0 kbps for 30 consecutive seconds. "
                     "Restarting...");
       esp_restart();
@@ -335,7 +398,52 @@ static void data_throughput_task(void *pvParameters) {
   }
 }
 
+void reset_watchdog_counter(void) {
+  g_consecutive_zero_count = 0;
+  ESP_LOGI(TAG, "Watchdog counter reset");
+}
+
+void wait_for_wifi_connection(void) {
+  ESP_LOGI(TAG, "Waiting for Wi-Fi connection...");
+  xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, false, true,
+                      portMAX_DELAY);
+  ESP_LOGI(TAG, "Wi-Fi Connected.");
+}
+
+void set_wifi_sleep_mode(bool sleeping) {
+  g_is_sleeping = sleeping;
+  if (sleeping) {
+    ESP_LOGI(TAG, "Setting WiFi sleep mode ON: disconnecting...");
+    esp_wifi_disconnect();
+  } else {
+    ESP_LOGI(TAG, "Setting WiFi sleep mode OFF: connecting...");
+
+    if (g_wifi_resume_state.has_state) {
+      ESP_LOGI(TAG, "Applying cached WiFi state (Fast Connect + Static IP)...");
+
+      // 1. Configure WiFi for Fast Scan
+      wifi_config_t sta_cfg;
+      esp_wifi_get_config(WIFI_IF_STA, &sta_cfg);
+      sta_cfg.sta.scan_method = WIFI_FAST_SCAN;
+      sta_cfg.sta.bssid_set = true;
+      memcpy(sta_cfg.sta.bssid, g_wifi_resume_state.bssid, 6);
+      sta_cfg.sta.channel = g_wifi_resume_state.channel;
+      esp_wifi_set_config(WIFI_IF_STA, &sta_cfg);
+
+      // 2. Configure Netif for Static IP (bypass DHCP)
+      esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+      if (netif) {
+        esp_netif_dhcpc_stop(netif);
+        esp_netif_set_ip_info(netif, &g_wifi_resume_state.ip_info);
+      }
+    }
+
+    esp_wifi_connect();
+  }
+}
+
 void app_main(void) {
+
   int initial_volume = INITIAL_VOLUME;
   int unmuted_volume = INITIAL_VOLUME;
   bool initial_mute = false;

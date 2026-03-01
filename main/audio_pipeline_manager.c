@@ -2,12 +2,15 @@
 #include "aac_decoder.h"
 #include "audio_common.h"
 #include "board.h" // For CONFIG_ESP32_C3_LYRA_V2_BOARD and I2S_STREAM_PDM_TX_CFG_DEFAULT
+#include "driver/gpio.h"
 #include "esp_log.h"
+#include "esp_sleep.h"
 #include "flac_decoder.h"
 #include "http_stream.h"
 #include "i2s_stream.h"
 #include "mp3_decoder.h"
 #include "ogg_decoder.h"
+#include <string.h>
 
 extern audio_pipeline_components_t audio_pipeline_components;
 
@@ -90,6 +93,11 @@ esp_err_t create_audio_pipeline(audio_pipeline_components_t *components,
 
   ESP_LOGI(TAG, "Creating audio pipeline for codec type: %s with URI: %s",
            codec_type_to_string(codec_type), uri);
+
+  // Save current state for recreation after wakeup
+  components->current_codec = codec_type;
+  strncpy(components->current_uri, uri, sizeof(components->current_uri) - 1);
+  components->current_uri[sizeof(components->current_uri) - 1] = '\0';
 
   audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
   //   pipeline_cfg.rb_size = 64 * 1024;
@@ -244,4 +252,57 @@ esp_err_t destroy_audio_pipeline(audio_pipeline_components_t *components) {
 
   ESP_LOGI(TAG, "Audio pipeline destroyed successfully");
   return ESP_OK;
+}
+
+esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
+                                       int wakeup_gpio) {
+  if (components == NULL || components->pipeline == NULL) {
+    return ESP_ERR_INVALID_ARG;
+  }
+
+  ESP_LOGI(TAG, "Preparing pipeline for light sleep...");
+
+  // Fully destroy the pipeline to clear any stale SSL/TCP state
+  destroy_audio_pipeline(components);
+
+  ESP_LOGI(TAG, "Configuring wakeup on GPIO %d (LOW level)", wakeup_gpio);
+  // 6. Configure hardware wakeup
+  esp_err_t err = gpio_wakeup_enable(wakeup_gpio, GPIO_INTR_LOW_LEVEL);
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to enable GPIO wakeup: %d", err);
+    return err;
+  }
+  // 7. Enable GPIO as wakeup source
+  err = esp_sleep_enable_gpio_wakeup();
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to enable sleep GPIO wakeup: %d", err);
+    return err;
+  }
+
+  ESP_LOGI(TAG, "Entering light sleep...");
+  // 8. Enter low-power state
+  esp_light_sleep_start();
+
+  ESP_LOGI(TAG, "Woke up from light sleep");
+  return ESP_OK;
+}
+
+esp_err_t
+audio_pipeline_manager_wakeup(audio_pipeline_components_t *components) {
+  if (components == NULL) {
+    return ESP_ERR_INVALID_ARG;
+  }
+
+  ESP_LOGI(TAG, "Recreating audio pipeline after wakeup");
+
+  // Recreate the pipeline from scratch
+  esp_err_t ret = create_audio_pipeline(components, components->current_codec,
+                                        components->current_uri);
+  if (ret != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to recreate pipeline after wakeup: %d", ret);
+    return ret;
+  }
+
+  // Re-run the pipeline
+  return audio_pipeline_run(components->pipeline);
 }
