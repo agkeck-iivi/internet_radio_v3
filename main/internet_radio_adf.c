@@ -58,6 +58,7 @@ static bool g_is_sleeping = false;
 
 typedef struct {
   esp_netif_ip_info_t ip_info;
+  esp_netif_dns_info_t dns_info;
   uint8_t bssid[6];
   uint8_t channel;
   bool has_state;
@@ -132,6 +133,8 @@ void change_station(int new_station_index) {
 
   ESP_LOGI(TAG, "Destroying current pipeline...");
   destroy_audio_pipeline(&audio_pipeline_components);
+  vTaskDelay(
+      pdMS_TO_TICKS(500)); // Allow network stack and memory manager to settle
 
   current_station = new_station_index;
   ESP_LOGI(TAG, "Switching to station %d: %s, %s", current_station,
@@ -233,7 +236,14 @@ static void event_handler(void *arg, esp_event_base_t event_base,
 
     // Cache the IP info for Strategy V3 (DHCP Caching)
     g_wifi_resume_state.ip_info = event->ip_info;
-    g_wifi_resume_state.has_state = true;
+
+    // Cache DNS info as well
+    esp_netif_dns_info_t dns;
+    if (esp_netif_get_dns_info(event->esp_netif, ESP_NETIF_DNS_MAIN, &dns) ==
+        ESP_OK) {
+      g_wifi_resume_state.dns_info = dns;
+      g_wifi_resume_state.has_state = true;
+    }
 
     xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
   } else if (event_base == WIFI_EVENT &&
@@ -443,6 +453,8 @@ void set_wifi_sleep_mode(bool sleeping) {
       if (netif) {
         esp_netif_dhcpc_stop(netif);
         esp_netif_set_ip_info(netif, &g_wifi_resume_state.ip_info);
+        esp_netif_set_dns_info(netif, ESP_NETIF_DNS_MAIN,
+                               &g_wifi_resume_state.dns_info);
       }
     }
 
