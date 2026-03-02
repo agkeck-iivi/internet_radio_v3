@@ -67,6 +67,8 @@ extern audio_pipeline_components_t audio_pipeline_components;
 #define DOUBLE_CLICK_TIMEOUT_MS 300
 // Delay before entering light sleep when muted (10 minutes)
 #define LIGHT_SLEEP_DELAY_MS 10000
+// Lockout period after wakeup to ignore ghost pulses (500ms)
+#define WAKEUP_LOCKOUT_US (500 * 1000)
 
 typedef struct {
   pcnt_unit_handle_t pcnt_unit;
@@ -89,6 +91,8 @@ static bool is_muted = false;
 static int64_t mute_start_time = 0;
 static limited_pulse_counter_t *g_volume_counter_ptr =
     NULL; // Pointer to the volume counter for shared access
+
+static int64_t g_last_wakeup_time = 0;
 
 static void save_volume_to_nvs(int volume) {
   nvs_handle_t nvs_handle;
@@ -175,17 +179,24 @@ void update_volume_pulse_counter(void *pvParameters) {
       new_volume = 100;
     }
     if (new_volume != counter->value) {
-      // If muted and user changes volume, unmute first
-      audio_hal_set_mute(counter->board_handle->audio_hal, false);
-      is_muted = false;
-      ESP_LOGI(TAG, "Unmuted by volume change to %d", new_volume);
-      update_mute_state(false);
-      save_mute_state_to_nvs(false);
+      // Check for lockout period after wakeup
+      if (esp_timer_get_time() - g_last_wakeup_time < WAKEUP_LOCKOUT_US) {
+        ESP_LOGI(TAG, "Ghost volume pulse ignored (lockout): %d -> %d",
+                 counter->value, new_volume);
+        counter->value = new_volume;
+      } else {
+        // If muted and user changes volume, unmute first
+        audio_hal_set_mute(counter->board_handle->audio_hal, false);
+        is_muted = false;
+        ESP_LOGI(TAG, "Unmuted by volume change to %d", new_volume);
+        update_mute_state(false);
+        save_mute_state_to_nvs(false);
 
-      counter->value = new_volume;
-      audio_hal_set_volume(counter->board_handle->audio_hal, new_volume);
-      update_volume_slider(new_volume);
-      save_volume_to_nvs(new_volume);
+        counter->value = new_volume;
+        audio_hal_set_volume(counter->board_handle->audio_hal, new_volume);
+        update_volume_slider(new_volume);
+        save_volume_to_nvs(new_volume);
+      }
     }
 
     vTaskDelay(
@@ -281,6 +292,9 @@ static void volume_press_task(void *pvParameters) {
         // Restart pipeline
         audio_pipeline_manager_wakeup(&audio_pipeline_components);
 
+        // Set wakeup timestamp for lockout
+        g_last_wakeup_time = esp_timer_get_time();
+
         // Reset watchdog to avoid spurious restarts
         reset_watchdog_counter();
 
@@ -298,7 +312,6 @@ static void volume_press_task(void *pvParameters) {
     }
 
     // Debounce after everything
-
     vTaskDelay(pdMS_TO_TICKS(50));
     vTaskDelay(pdMS_TO_TICKS(VOLUME_PRESS_POLLING_PERIOD_MS));
   }
@@ -355,7 +368,6 @@ static void station_press_task(void *pvParameters) {
         }
 
         // Wait 5 seconds
-        // Wait 5 seconds
         vTaskDelay(pdMS_TO_TICKS(IP_SCREEN_DISPLAY_TIME_MS));
         switch_to_home_screen();
       }
@@ -385,6 +397,14 @@ void update_station_select_pulse_counter(void *pvParameters) {
     int current_step_count = raw_count / 4;
 
     if (current_step_count != last_step_count) {
+      // Check for lockout period after wakeup
+      if (esp_timer_get_time() - g_last_wakeup_time < WAKEUP_LOCKOUT_US) {
+        ESP_LOGI(TAG, "Ghost station pulse ignored (lockout): %d -> %d",
+                 last_step_count, current_step_count);
+        last_step_count = current_step_count;
+        continue;
+      }
+
       // A change occurred, switch to station screen if not already there
       if (!on_station_screen) {
         on_station_screen = true;
@@ -483,8 +503,8 @@ void init_encoders(audio_board_handle_t board_handle, int initial_volume,
   ESP_LOGI(TAG, "install volume pcnt unit");
   static pcnt_unit_config_t volume_unit_config = {
       .high_limit =
-          INT16_MAX, // these are defined in <limits.h>  16 bit counter has type
-                     // int (32bit?), force int16 limits
+          INT16_MAX, // these are defined in <limits.h>  16 bit counter has
+                     // type int (32bit?), force int16 limits
       .low_limit = INT16_MIN,
   };
   static pcnt_unit_handle_t volume_pcnt_unit = NULL;
@@ -547,8 +567,8 @@ void init_encoders(audio_board_handle_t board_handle, int initial_volume,
   ESP_ERROR_CHECK(gpio_config(&station_encoder_gpio_config));
   static pcnt_unit_config_t station_unit_config = {
       .high_limit =
-          INT16_MAX, // these are defined in <limits.h>  16 bit counter has type
-                     // int (32bit?), force int16 limits
+          INT16_MAX, // these are defined in <limits.h>  16 bit counter has
+                     // type int (32bit?), force int16 limits
       .low_limit = INT16_MIN,
   };
   static pcnt_unit_handle_t station_pcnt_unit = NULL;

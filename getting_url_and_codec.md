@@ -35,7 +35,7 @@ The following table shows the measured bitrates for the default radio stations (
 | KBUT | 64 kbps | `http://playerservices.streamtheworld.com/api/livestream-redirect/KBUTFM.mp3` |
 | KSUT | 64 kbps | `https://ksut.streamguys1.com/kute` |
 | KDUR | 128 kbps | `https://kdurradio.fortlewis.edu/stream` |
-| KOTO | 128 kbps | `http://26193.live.streamtheworld.com/KOTOFM.mp3` |
+| KOTO | 128 kbps | `http://playerservices.streamtheworld.com/api/livestream-redirect/KOTOFM.mp3` |
 | KHEN | 128 kbps | `https://stream.pacificaservice.org:9000/khen_128` |
 | KWSB | 128 kbps | `https://kwsb.streamguys1.com/live` |
 | KFFP | 256 kbps | `http://listen.freeformportland.org:8000/stream` |

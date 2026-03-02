@@ -32,16 +32,22 @@ static const default_station_t default_stations[] = {
     {"KSUT", "4 Corners", "https://ksut.streamguys1.com/kute", CODEC_TYPE_AAC},
     {"KDUR", "Durango", "https://kdurradio.fortlewis.edu/stream",
      CODEC_TYPE_MP3},
-    {"KOTO", "Telluride", "http://26193.live.streamtheworld.com/KOTOFM.mp3",
-     CODEC_TYPE_MP3},
+    {
+      "KOTO",
+      "Telluride",
+      "http://playerservices.streamtheworld.com/api/livestream-redirect/KOTOFM.mp3",
+      CODEC_TYPE_MP3
+    },
     {"KHEN", "Salida", "https://stream.pacificaservice.org:9000/khen_128",
      CODEC_TYPE_MP3},
     {"KWSB", "Gunnison", "https://kwsb.streamguys1.com/live", CODEC_TYPE_MP3},
-    {"KFFP", "Portland", "http://listen.freeformportland.org:8000/stream",
-     CODEC_TYPE_MP3}, // this is a 256K stream  it works sporadically
-     // new kffp steam: https://stream.freeformportland.org/listen/freeformportland/relay.mp3
-     // this new stream is still 256kbps but AzuraCast api reports that it is 128kbps.
-    {"KBOO", "Portland", "https://live.kboo.fm:8443/high", CODEC_TYPE_MP3},
+    // {"KFFP", "Portland", "http://listen.freeformportland.org:8000/stream",
+    //  CODEC_TYPE_MP3}, // this is a 256K stream  it works sporadically
+    //  // new kffp steam:
+    //  https://stream.freeformportland.org/listen/freeformportland/relay.mp3
+    //  // this new stream is still 256kbps but AzuraCast api reports that it is
+    //  128kbps.
+    // {"KBOO", "Portland", "https://live.kboo.fm:8443/high", CODEC_TYPE_MP3},
     {"KXLU", "Loyola Marymnt", "http://kxlu.streamguys1.com:80/kxlu-lo",
      CODEC_TYPE_AAC},
     {"WPRB", "Princeton", "https://wprb.streamguys1.com/listen.mp3",
