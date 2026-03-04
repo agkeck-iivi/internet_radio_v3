@@ -275,6 +275,10 @@ static void volume_press_task(void *pvParameters) {
                                      VOLUME_PRESS_GPIO);
 
         // --- AFTER WAKEUP ---
+        // Set wakeup timestamp for lockout immediately to prevent race with
+        // polling tasks
+        g_last_wakeup_time = esp_timer_get_time();
+
         ESP_LOGI(TAG, "Resuming from light sleep...");
 
         // Trigger reconnection immediately (non-blocking)
@@ -291,9 +295,6 @@ static void volume_press_task(void *pvParameters) {
 
         // Restart pipeline
         audio_pipeline_manager_wakeup(&audio_pipeline_components);
-
-        // Set wakeup timestamp for lockout
-        g_last_wakeup_time = esp_timer_get_time();
 
         // Reset watchdog to avoid spurious restarts
         reset_watchdog_counter();
