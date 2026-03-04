@@ -5,6 +5,7 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_sleep.h"
+#include "esp_task_wdt.h"
 #include "flac_decoder.h"
 #include "http_stream.h"
 #include "i2s_stream.h"
@@ -282,6 +283,10 @@ esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
 
   ESP_LOGI(TAG, "Entering light sleep...");
   // 8. Enter low-power state
+  // Cache current TWDT config (if possible) or use a safe default
+  // In ESP-IDF v5, we can't easily "get" the current config, so we'll use
+  // the SDK defaults when re-initializing.
+  esp_task_wdt_deinit();
   esp_light_sleep_start();
 
   ESP_LOGI(TAG, "Woke up from light sleep");
@@ -293,6 +298,27 @@ audio_pipeline_manager_wakeup(audio_pipeline_components_t *components) {
   if (components == NULL) {
     return ESP_ERR_INVALID_ARG;
   }
+
+  // Re-enable Task Watchdog using SDK configuration values
+  uint32_t idle_core_mask = 0;
+#if CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0
+  idle_core_mask |= (1 << 0);
+#endif
+#if CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1
+  idle_core_mask |= (1 << 1);
+#endif
+
+  esp_task_wdt_config_t twdt_config = {
+      .timeout_ms = CONFIG_ESP_TASK_WDT_TIMEOUT_S * 1000,
+      .idle_core_mask = idle_core_mask,
+#ifdef CONFIG_ESP_TASK_WDT_PANIC
+      .trigger_panic = true,
+#else
+      .trigger_panic = false,
+#endif
+  };
+
+  esp_task_wdt_init(&twdt_config);
 
   ESP_LOGI(TAG, "Recreating audio pipeline after wakeup");
 
