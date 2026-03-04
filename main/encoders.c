@@ -13,8 +13,11 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 
+#include "driver/rtc_io.h"
+
 #include "audio_hal.h"
 #include "esp_sleep.h"
+#include "esp_wifi.h"
 #include "nvs_flash.h" // this is needed even though linter suggests otherwise
 
 #include <limits.h>
@@ -65,8 +68,13 @@ extern audio_pipeline_components_t audio_pipeline_components;
 #define REBOOT_MESSAGE_DISPLAY_TIME_MS 100
 // Time window to detect a second click for double-click actions
 #define DOUBLE_CLICK_TIMEOUT_MS 300
-// Delay before entering light sleep when muted (10 minutes)
-#define LIGHT_SLEEP_DELAY_MS 10000
+// Delay before entering light sleep when muted (20 minutes)
+#define LIGHT_SLEEP_DELAY_MS (20 * 60 * 1000)
+// Delay from light sleep to deep sleep (2 hours)
+#define DEEP_SLEEP_DELAY_MS (120 * 60 * 1000)
+// Minimum time spent in light sleep before we accept it as a timeout for deep
+// sleep (1.8 hours)
+#define MIN_SLEEP_TIMEOUT_US (6480LL * 1000 * 1000)
 // Lockout period after wakeup to ignore ghost pulses (500ms)
 #define WAKEUP_LOCKOUT_US (500 * 1000)
 
@@ -205,8 +213,10 @@ void update_volume_pulse_counter(void *pvParameters) {
 }
 
 static void volume_press_task(void *pvParameters) {
-  ESP_LOGI(TAG, "Volume press button task started.");
-
+  ESP_LOGI(
+      TAG,
+      "Volume press button task started. [BUILD_ID: robust_deep_sleep_v3]");
+  uint64_t last_press_time = 0;
   while (1) {
     if (gpio_get_level(VOLUME_PRESS_GPIO) ==
         0) { // Button is pressed (active low)
@@ -271,10 +281,65 @@ static void volume_press_task(void *pvParameters) {
         set_wifi_sleep_mode(true);
 
         // Enter sleep (logic inside audio_pipeline_manager.c)
+        // Pass DEEP_SLEEP_DELAY_MS * 1000 as timer wakeup duration
+        uint64_t requested_sleep_us = (uint64_t)DEEP_SLEEP_DELAY_MS * 1000;
+        int64_t sleep_start_time = esp_timer_get_time();
+
+        ESP_LOGI(TAG, "Entering light sleep stage (requested %llu us)...",
+                 requested_sleep_us);
         audio_pipeline_manager_sleep(&audio_pipeline_components,
-                                     VOLUME_PRESS_GPIO);
+                                     VOLUME_PRESS_GPIO, requested_sleep_us);
 
         // --- AFTER WAKEUP ---
+
+        // Check wakeup cause and duration
+        int64_t actual_sleep_duration_us =
+            esp_timer_get_time() - sleep_start_time;
+        esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
+
+        ESP_LOGI(TAG,
+                 "Woke from light sleep after %lld us. Cause: %d (1=EXT0, "
+                 "2=EXT1, 4=TIMER, 7=GPIO)",
+                 actual_sleep_duration_us, cause);
+
+        // ONLY enter deep sleep if it was truly a timer timeout (not a 10ms
+        // glitch)
+        if (cause == ESP_SLEEP_WAKEUP_TIMER &&
+            actual_sleep_duration_us >= MIN_SLEEP_TIMEOUT_US) {
+          ESP_LOGI(TAG, "Deep sleep timeout reached. Transitioning to system "
+                        "deep sleep...");
+
+          // Ensure button is released before entering deep sleep to avoid
+          // immediate wakeup
+          while (gpio_get_level(VOLUME_PRESS_GPIO) == 0) {
+            ESP_LOGI(TAG, "Waiting for button release before deep sleep...");
+            vTaskDelay(pdMS_TO_TICKS(100));
+          }
+
+          // Ensure WiFi is stopped for a clean state
+          set_wifi_sleep_mode(true);
+          esp_wifi_stop();
+
+          // Disable all wakeup sources before re-configuring for deep sleep
+          esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+
+          // Ensure RTC pull-up is enabled for deep sleep
+          rtc_gpio_init(VOLUME_PRESS_GPIO);
+          rtc_gpio_set_direction(VOLUME_PRESS_GPIO, RTC_GPIO_MODE_INPUT_ONLY);
+          rtc_gpio_pullup_en(VOLUME_PRESS_GPIO);
+          rtc_gpio_pulldown_dis(VOLUME_PRESS_GPIO);
+
+          // Configure deep sleep wakeup on Volume Press GPIO
+          esp_sleep_enable_ext0_wakeup(VOLUME_PRESS_GPIO, 0); // Wake on LOW
+
+          ESP_LOGI(TAG, "Entering deep sleep NOW. Wake up with Volume Press.");
+          esp_deep_sleep_start();
+        } else {
+          ESP_LOGI(TAG, "Light sleep interrupted (duration glitch or button "
+                        "press). Resuming...");
+        }
+
+        // If we reach here, it was a GPIO wakeup (or other)
         // Set wakeup timestamp for lockout immediately to prevent race with
         // polling tasks
         g_last_wakeup_time = esp_timer_get_time();

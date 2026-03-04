@@ -59,9 +59,14 @@ esp_err_t destroy_audio_pipeline(audio_pipeline_components_t *components);
  * @brief Prepares the pipeline for sleep and enters light sleep.
  * @param components Pointer to audio pipeline components.
  * @param wakeup_gpio The GPIO number to use for wakeup.
+ * @param timer_wakeup_us The timer wakeup duration in microseconds. This is the
+ *                        time during which the system stays in light sleep
+ *                        before waking to potentially enter deep sleep.
+ *                        (0 to disable timer wakeup).
  */
 esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
-                                       int wakeup_gpio);
+                                       int wakeup_gpio,
+                                       uint64_t timer_wakeup_us);
 
 /**
  * @brief Re-runs the audio pipeline after waking from sleep.

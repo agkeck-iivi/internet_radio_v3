@@ -20,6 +20,7 @@
 #include "esp_log.h"
 #include "esp_netif.h"
 #include "esp_peripherals.h"
+#include "esp_sleep.h"
 #include "esp_wifi.h"
 // #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
@@ -468,6 +469,37 @@ void app_main(void) {
   int unmuted_volume = INITIAL_VOLUME;
   bool initial_mute = false;
   esp_log_level_set("*", ESP_LOG_DEBUG);
+
+  esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+  bool waked_by_button = false;
+  switch (wakeup_reason) {
+  case ESP_SLEEP_WAKEUP_EXT0:
+    ESP_LOGI(
+        TAG,
+        "Wakeup caused by external signal using RTC_IO (EXT0) - Volume Button");
+    waked_by_button = true;
+    break;
+  case ESP_SLEEP_WAKEUP_EXT1:
+    ESP_LOGI(TAG, "Wakeup caused by external signal using RTC_CNTL (EXT1)");
+    break;
+  case ESP_SLEEP_WAKEUP_TIMER:
+    ESP_LOGI(TAG, "Wakeup caused by timer");
+    break;
+  case ESP_SLEEP_WAKEUP_TOUCHPAD:
+    ESP_LOGI(TAG, "Wakeup caused by touchpad");
+    break;
+  case ESP_SLEEP_WAKEUP_ULP:
+    ESP_LOGI(TAG, "Wakeup caused by ULP program");
+    break;
+  case ESP_SLEEP_WAKEUP_GPIO:
+    ESP_LOGI(TAG, "Wakeup caused by GPIO (Light Sleep)");
+    break;
+  default:
+    ESP_LOGI(TAG, "Wakeup was not caused by deep sleep or light sleep: %d",
+             wakeup_reason);
+    break;
+  }
+
   // esp_log_level_set(TAG, ESP_LOG_DEBUG);
   // esp_log_level_set("HTTP_STREAM", ESP_LOG_DEBUG);
   esp_err_t err = nvs_flash_init();
@@ -539,6 +571,20 @@ void app_main(void) {
       ESP_LOGI(TAG, "The value 'mute_state' is not initialized yet!");
     } else {
       ESP_LOGE(TAG, "Error (%s) reading 'mute_state'!", esp_err_to_name(err));
+    }
+
+    // Override mute if waking from deep sleep by button
+    if (waked_by_button) {
+      ESP_LOGI(TAG, "Wakeup via button press: Overriding mute state to UNMUTED "
+                    "and updating NVS.");
+      initial_mute = false;
+      err = nvs_set_u8(nvs_handle, "mute_state", 0);
+      if (err == ESP_OK) {
+        nvs_commit(nvs_handle);
+      } else {
+        ESP_LOGE(TAG, "Error (%s) updating 'mute_state' in NVS!",
+                 esp_err_to_name(err));
+      }
     }
 
     unmuted_volume = initial_volume;
