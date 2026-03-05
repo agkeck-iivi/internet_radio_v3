@@ -68,13 +68,20 @@ extern audio_pipeline_components_t audio_pipeline_components;
 #define REBOOT_MESSAGE_DISPLAY_TIME_MS 100
 // Time window to detect a second click for double-click actions
 #define DOUBLE_CLICK_TIMEOUT_MS 300
-// Delay before entering light sleep when muted (20 minutes)
-#define LIGHT_SLEEP_DELAY_MS (20 * 60 * 1000)
-// Delay from light sleep to deep sleep (2 hours)
-#define DEEP_SLEEP_DELAY_MS (120 * 60 * 1000)
-// Minimum time spent in light sleep before we accept it as a timeout for deep
-// sleep (1.8 hours)
-#define MIN_SLEEP_TIMEOUT_US (6480LL * 1000 * 1000)
+// Set these to variables to allow future runtime configuration
+// IFTT: If these variables change at runtime, ensure the logic in
+// volume_press_task dynamically recalculates min_sleep_threshold_us.
+uint32_t g_light_sleep_delay_ms = 20 * 60 * 1000;
+uint32_t g_deep_sleep_delay_ms = 2 * 60 * 60 * 1000;
+
+typedef enum {
+  POWER_SAVE_NONE,
+  POWER_SAVE_LIGHT_ONLY,
+  POWER_SAVE_LIGHT_DEEP
+} power_save_mode_t;
+
+// Set the current power saving strategy as a variable for runtime adjustment
+power_save_mode_t g_power_save_mode = POWER_SAVE_LIGHT_DEEP;
 // Lockout period after wakeup to ignore ghost pulses (500ms)
 #define WAKEUP_LOCKOUT_US (500 * 1000)
 
@@ -215,7 +222,7 @@ void update_volume_pulse_counter(void *pvParameters) {
 static void volume_press_task(void *pvParameters) {
   ESP_LOGI(
       TAG,
-      "Volume press button task started. [BUILD_ID: robust_deep_sleep_v3]");
+      "Volume press button task started. [BUILD_ID: robust_deep_sleep_v7]");
   uint64_t last_press_time = 0;
   while (1) {
     if (gpio_get_level(VOLUME_PRESS_GPIO) ==
@@ -270,23 +277,27 @@ static void volume_press_task(void *pvParameters) {
       }
     }
 
-    // Check for light sleep timeout if muted
-    if (is_muted) {
+    // Check for light sleep timeout if muted and power saving is enabled
+    if (is_muted && g_power_save_mode != POWER_SAVE_NONE) {
       int64_t now = esp_timer_get_time();
-      if (now - mute_start_time > (int64_t)LIGHT_SLEEP_DELAY_MS * 1000) {
-        ESP_LOGI(TAG, "Muted for >%d seconds. Entering light sleep...",
-                 LIGHT_SLEEP_DELAY_MS / 1000);
+      if (now - mute_start_time > (int64_t)g_light_sleep_delay_ms * 1000) {
+        ESP_LOGI(TAG, "Muted for >%u ms. Entering light sleep...",
+                 (unsigned int)g_light_sleep_delay_ms);
 
         // Disconnect WiFi before sleep to bypass bcn_timeout on wakeup
         set_wifi_sleep_mode(true);
 
         // Enter sleep (logic inside audio_pipeline_manager.c)
-        // Pass DEEP_SLEEP_DELAY_MS * 1000 as timer wakeup duration
-        uint64_t requested_sleep_us = (uint64_t)DEEP_SLEEP_DELAY_MS * 1000;
+        // Pass timer wakeup duration ONLY if Light+Deep mode is active
+        uint64_t requested_sleep_us =
+            (g_power_save_mode == POWER_SAVE_LIGHT_DEEP)
+                ? ((uint64_t)g_deep_sleep_delay_ms * 1000)
+                : 0;
         int64_t sleep_start_time = esp_timer_get_time();
 
-        ESP_LOGI(TAG, "Entering light sleep stage (requested %llu us)...",
-                 requested_sleep_us);
+        ESP_LOGI(TAG,
+                 "Entering light sleep stage (requested %llu us, mode: %d)...",
+                 requested_sleep_us, (int)g_power_save_mode);
         audio_pipeline_manager_sleep(&audio_pipeline_components,
                                      VOLUME_PRESS_GPIO, requested_sleep_us);
 
@@ -302,10 +313,14 @@ static void volume_press_task(void *pvParameters) {
                  "2=EXT1, 4=TIMER, 7=GPIO)",
                  actual_sleep_duration_us, cause);
 
-        // ONLY enter deep sleep if it was truly a timer timeout (not a 10ms
-        // glitch)
-        if (cause == ESP_SLEEP_WAKEUP_TIMER &&
-            actual_sleep_duration_us >= MIN_SLEEP_TIMEOUT_US) {
+        // Calculate safety threshold based on current delay (90%)
+        uint64_t min_sleep_threshold_us = (uint64_t)g_deep_sleep_delay_ms * 900;
+
+        // ONLY enter deep sleep if in LIGHT_DEEP mode and it was a timer
+        // timeout
+        if (g_power_save_mode == POWER_SAVE_LIGHT_DEEP &&
+            cause == ESP_SLEEP_WAKEUP_TIMER &&
+            actual_sleep_duration_us >= min_sleep_threshold_us) {
           ESP_LOGI(TAG, "Deep sleep timeout reached. Transitioning to system "
                         "deep sleep...");
 
