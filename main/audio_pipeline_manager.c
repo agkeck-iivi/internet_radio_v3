@@ -12,6 +12,8 @@
 #include "mp3_decoder.h"
 #include "ogg_decoder.h"
 #include <string.h>
+#include "esp_task_wdt.h"
+#include "sdkconfig.h"
 
 extern audio_pipeline_components_t audio_pipeline_components;
 
@@ -293,7 +295,15 @@ esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
 
   ESP_LOGI(TAG, "Entering light sleep...");
   // 8. Enter low-power state
+  esp_task_wdt_deinit();
   esp_light_sleep_start();
+
+  esp_task_wdt_config_t twdt_config = {
+      .timeout_ms = CONFIG_ESP_TASK_WDT_TIMEOUT_S * 1000,
+      .idle_core_mask = (1 << CONFIG_FREERTOS_NUMBER_OF_CORES) - 1,
+      .trigger_panic = false,
+  };
+  esp_task_wdt_init(&twdt_config);
 
   ESP_LOGI(TAG, "Woke up from light sleep");
   return ESP_OK;

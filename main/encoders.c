@@ -72,6 +72,7 @@ extern audio_pipeline_components_t audio_pipeline_components;
 // IFTT: If these variables change at runtime, ensure the logic in
 // volume_press_task dynamically recalculates min_sleep_threshold_us.
 uint32_t g_light_sleep_delay_ms = 20 * 60 * 1000;
+// uint32_t g_light_sleep_delay_ms = 20 * 60 * 1000;
 uint32_t g_deep_sleep_delay_ms = 2 * 60 * 60 * 1000;
 
 typedef enum {
@@ -81,7 +82,7 @@ typedef enum {
 } power_save_mode_t;
 
 // Set the current power saving strategy as a variable for runtime adjustment
-power_save_mode_t g_power_save_mode = POWER_SAVE_LIGHT_DEEP;
+power_save_mode_t g_power_save_mode = POWER_SAVE_LIGHT_ONLY;
 // Lockout period after wakeup to ignore ghost pulses (500ms)
 #define WAKEUP_LOCKOUT_US (500 * 1000)
 
@@ -298,10 +299,19 @@ static void volume_press_task(void *pvParameters) {
         ESP_LOGI(TAG,
                  "Entering light sleep stage (requested %llu us, mode: %d)...",
                  requested_sleep_us, (int)g_power_save_mode);
+
+        // Set sentinel to ensure lockout is active during the sleep/wake
+        // transition
+        g_last_wakeup_time = LLONG_MAX;
+
         audio_pipeline_manager_sleep(&audio_pipeline_components,
                                      VOLUME_PRESS_GPIO, requested_sleep_us);
 
         // --- AFTER WAKEUP ---
+
+        // Set wakeup timestamp for lockout immediately to prevent race with
+        // polling tasks
+        g_last_wakeup_time = esp_timer_get_time();
 
         // Check wakeup cause and duration
         int64_t actual_sleep_duration_us =
@@ -355,10 +365,6 @@ static void volume_press_task(void *pvParameters) {
         }
 
         // If we reach here, it was a GPIO wakeup (or other)
-        // Set wakeup timestamp for lockout immediately to prevent race with
-        // polling tasks
-        g_last_wakeup_time = esp_timer_get_time();
-
         ESP_LOGI(TAG, "Resuming from light sleep...");
 
         // Trigger reconnection immediately (non-blocking)
