@@ -25,7 +25,7 @@
 // #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "freertos/task.h"
-#include "ir_rmt.h"
+#include "ir_remote.h"
 #include "lvgl_ssd1306_setup.h"
 #include "nvs_flash.h"
 #include "screens.h"
@@ -75,7 +75,7 @@ static audio_board_handle_t board_handle =
     NULL; // make this global during debugging
 static audio_event_iface_handle_t evt = NULL;
 static esp_periph_set_handle_t periph_set = NULL;
-rmt_channel_handle_t g_ir_tx_channel = NULL;
+// g_ir_tx_channel is no longer needed globally as it's managed by the ir_remote component
 
 volatile int g_bitrate_kbps = 0;
 // system monitor logging enable
@@ -768,10 +768,12 @@ void app_main(void) {
   audio_event_iface_set_listener(esp_periph_set_get_event_iface(periph_set),
                                  evt);
 
-  ESP_LOGI(TAG, "Initializing IR RMT");
-  g_ir_tx_channel = init_ir_rmt(IR_TX_GPIO_NUM);
-  ESP_LOGI(TAG, "Sending Bose AUX signal");
-  send_bose_ir_command(g_ir_tx_channel, BOSE_CMD_AUX);
+#ifdef CONFIG_IR_REMOTE_ENABLED
+  ESP_LOGI(TAG, "Initializing IR Remote Component");
+  ir_remote_init((gpio_num_t)IR_TX_GPIO_NUM, IR_PROTOCOL_BOSE);
+  ESP_LOGI(TAG, "Sending Audio ON signal");
+  ir_remote_turn_audio_on();
+#endif
 
   ESP_LOGI(TAG, "Starting initial stream: %s, %s",
            radio_stations[current_station].call_sign,

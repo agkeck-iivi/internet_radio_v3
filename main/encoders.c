@@ -26,7 +26,7 @@
 #include "esp_netif.h"
 #include "esp_timer.h"
 #include "internet_radio_adf.h"
-#include "ir_rmt.h"
+#include "ir_remote.h"
 #include "lvgl_ssd1306_setup.h"
 #include "pcm5122_driver.h"
 #include "screens.h"
@@ -39,7 +39,6 @@ static const char *TAG = "encoders";
 
 extern int station_count;
 extern int current_station;
-extern rmt_channel_handle_t g_ir_tx_channel;
 extern audio_pipeline_components_t audio_pipeline_components;
 
 #define VOLUME_GPIO_A 42
@@ -247,7 +246,7 @@ static void volume_press_task(void *pvParameters) {
       }
 
       if (double_click) {
-        ESP_LOGI(TAG, "Double click detected - Sending Bose ON/OFF signal");
+        ESP_LOGI(TAG, "Double click detected - Sending Audio Toggle signal");
         // Debounce second click
         vTaskDelay(pdMS_TO_TICKS(50));
         // Wait for release of second click
@@ -255,9 +254,9 @@ static void volume_press_task(void *pvParameters) {
           vTaskDelay(pdMS_TO_TICKS(10));
         }
 
-        if (g_ir_tx_channel) {
-          send_bose_ir_command(g_ir_tx_channel, BOSE_CMD_ON_OFF);
-        }
+#ifdef CONFIG_IR_REMOTE_ENABLED
+        ir_remote_toggle_audio();
+#endif
       } else {
         // Timeout reached, no second click -> Single Click Action (Mute Toggle)
         is_muted = !is_muted; // Toggle mute state

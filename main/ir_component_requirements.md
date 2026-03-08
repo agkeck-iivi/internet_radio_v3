@@ -1,5 +1,5 @@
 # introduction
-The internet radio uses ir remote control to control the on/off state of the audio device to which it is connected.  During boot time the audio device is turned on.  One can also toggle the on/off state of the audio device by a double click on the station select button.  This code is entwined with the main logic of the application and should be extracted into a separate component.
+The internet radio uses ir remote control to control the on/off state of the audio device to which it is connected.  During boot time the audio device is turned on.  One can also toggle the on/off state of the audio device by a double click on the volume button.  This code is entwined with the main logic of the application and should be extracted into a separate component.
 
 # goal
 Extract the the ir remote implementation into a component.  This component should export an abstract interface and should be designed to allow other ir remote protocols to be added easily.

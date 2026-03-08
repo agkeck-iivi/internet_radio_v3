@@ -1,0 +1,10 @@
+menu "IR Remote Control"
+
+    config IR_REMOTE_ENABLED
+        bool "Enable IR Remote functionality"
+        default y
+        help
+            Enable this to compile in the IR remote control functionality.
+            When enabled, the ir_remote component will control external audio devices via IR.
+
+endmenu
