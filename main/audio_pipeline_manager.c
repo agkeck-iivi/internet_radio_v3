@@ -16,6 +16,7 @@
 #include "sdkconfig.h"
 
 extern audio_pipeline_components_t audio_pipeline_components;
+extern volatile bool g_is_pipeline_running;
 
 static const char *TAG = "AUDIO_PIPELINE_MGR";
 volatile uint64_t g_bytes_read = 0;
@@ -268,6 +269,7 @@ esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
   ESP_LOGI(TAG, "Preparing pipeline for light sleep...");
 
   // Fully destroy the pipeline to clear any stale SSL/TCP state
+  g_is_pipeline_running = false;
   destroy_audio_pipeline(components);
 
   ESP_LOGI(TAG, "Configuring wakeup on GPIO %d (LOW level)", wakeup_gpio);
@@ -327,5 +329,9 @@ audio_pipeline_manager_wakeup(audio_pipeline_components_t *components) {
 
   // Re-run the pipeline
   reset_throughput_history();
-  return audio_pipeline_run(components->pipeline);
+  ret = audio_pipeline_run(components->pipeline);
+  if (ret == ESP_OK) {
+    g_is_pipeline_running = true;
+  }
+  return ret;
 }

@@ -81,6 +81,7 @@ volatile int g_bitrate_kbps = 0;
 // system monitor logging enable
 static bool g_enable_sys_monitor = false;
 static int g_consecutive_zero_count = 0;
+volatile bool g_is_pipeline_running = false; // Flag to control watchdog
 // Button Handles
 
 static EventGroupHandle_t wifi_event_group;
@@ -138,6 +139,7 @@ void change_station(int new_station_index) {
       pdMS_TO_TICKS(500)); // Allow network stack and memory manager to settle
 
   current_station = new_station_index;
+  g_is_pipeline_running = false;
   ESP_LOGI(TAG, "Switching to station %d: %s, %s", current_station,
            radio_stations[current_station].call_sign,
            radio_stations[current_station].origin);
@@ -174,6 +176,8 @@ void change_station(int new_station_index) {
   if (ret != ESP_OK) {
     ESP_LOGE(TAG, "Failed to run new audio pipeline. Error: %d", ret);
     destroy_audio_pipeline(&audio_pipeline_components);
+  } else {
+    g_is_pipeline_running = true;
   }
 }
 
@@ -396,17 +400,21 @@ static void data_throughput_task(void *pvParameters) {
     }
 
     // Watchdog check
-    if (current_bitrate == 0) {
-      g_consecutive_zero_count++;
+    if (g_is_pipeline_running) {
+      if (current_bitrate == 0) {
+        g_consecutive_zero_count++;
+      } else {
+        g_consecutive_zero_count = 0;
+      }
+
+      if (g_consecutive_zero_count >= 30) {
+
+        ESP_LOGE(TAG, "Watchdog triggered: 0 kbps for 30 consecutive seconds. "
+                      "Restarting...");
+        esp_restart();
+      }
     } else {
       g_consecutive_zero_count = 0;
-    }
-
-    if (g_consecutive_zero_count >= 30) {
-
-      ESP_LOGE(TAG, "Watchdog triggered: 0 kbps for 30 consecutive seconds. "
-                    "Restarting...");
-      esp_restart();
     }
   }
 }
@@ -785,6 +793,7 @@ void app_main(void) {
   ESP_LOGI(TAG, "Start audio_pipeline");
   reset_throughput_history();
   audio_pipeline_run(audio_pipeline_components.pipeline);
+  g_is_pipeline_running = true;
 
   xTaskCreate(data_throughput_task, "data_throughput_task", 3 * 1024, NULL, 5,
               NULL);
