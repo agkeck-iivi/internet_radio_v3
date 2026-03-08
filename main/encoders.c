@@ -70,7 +70,7 @@ extern audio_pipeline_components_t audio_pipeline_components;
 // Set these to variables to allow future runtime configuration
 // IFTT: If these variables change at runtime, ensure the logic in
 // volume_press_task dynamically recalculates min_sleep_threshold_us.
-uint32_t g_light_sleep_delay_ms = 20 * 60 * 1000;
+uint32_t g_light_sleep_delay_ms = 10 * 1000;
 uint32_t g_deep_sleep_delay_ms = 2 * 60 * 60 * 1000;
 
 typedef enum {

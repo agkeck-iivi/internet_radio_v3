@@ -213,6 +213,9 @@ static esp_err_t send_signal(const rmt_symbol_word_t* signal_data, size_t signal
     }
 
     ret = rmt_transmit(g_tx_channel, copy_encoder, signal_data, signal_size, &transmit_config);
+    if (ret == ESP_OK) {
+        rmt_tx_wait_all_done(g_tx_channel, -1);
+    }
     rmt_del_encoder(copy_encoder);
 
     return ret;
