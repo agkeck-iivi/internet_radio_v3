@@ -1,5 +1,6 @@
 #include "board_pins_config.h"
 #include "audio_error.h"
+#include "gpio_assignments.h"
 #include "audio_mem.h"
 #include "board.h"
 #include "driver/gpio.h"
@@ -14,8 +15,8 @@ static const char *TAG = "PCM5122_BOARD";
 esp_err_t get_i2c_pins(i2c_port_t port, i2c_config_t *i2c_config) {
   AUDIO_NULL_CHECK(TAG, i2c_config, return ESP_FAIL);
   if (port == I2C_NUM_0 || port == I2C_NUM_1) {
-    i2c_config->sda_io_num = GPIO_NUM_10;
-    i2c_config->scl_io_num = GPIO_NUM_9;
+    i2c_config->sda_io_num = I2C_SDA_GPIO;
+    i2c_config->scl_io_num = I2C_SCL_GPIO;
   } else {
     i2c_config->sda_io_num = -1;
     i2c_config->scl_io_num = -1;
@@ -29,13 +30,13 @@ esp_err_t get_i2s_pins(int port, board_i2s_pin_t *i2s_config) {
   AUDIO_NULL_CHECK(TAG, i2s_config, return ESP_FAIL);
   if (port == 0 || port == 1) {
     // PCM5122 requires BCLK, LRCK (WS), and DIN
-    i2s_config->bck_io_num = GPIO_NUM_7;
-    i2s_config->ws_io_num = GPIO_NUM_5;
-    i2s_config->data_out_num = GPIO_NUM_6; // This goes to DIN on PCM5122
+    i2s_config->bck_io_num = I2S_BCK_GPIO;
+    i2s_config->ws_io_num = I2S_WS_LRCK_GPIO;
+    i2s_config->data_out_num = I2S_DATA_OUT_GPIO; // This goes to DIN on PCM5122
 
     // Not used by PCM5122 in typical setup, but required by struct
-    i2s_config->mck_io_num = GPIO_NUM_16;
-    i2s_config->data_in_num = GPIO_NUM_4;
+    i2s_config->mck_io_num = -1; // Master clock not used
+    i2s_config->data_in_num = I2S_DATA_IN_GPIO;
   } else {
     memset(i2s_config, -1, sizeof(board_i2s_pin_t));
     ESP_LOGE(TAG, "i2s port %d is not supported", port);
@@ -77,10 +78,10 @@ int8_t get_green_led_gpio(void) { return -1; }
 int8_t get_reset_board_gpio(void) { return -1; }
 
 // Stubs for esp-adf driver compilation
-int get_i2s_mclk_gpio(void) { return GPIO_NUM_16; }
-int get_i2s_bclk_gpio(void) { return GPIO_NUM_7; }
-int get_i2s_lrck_gpio(void) { return GPIO_NUM_5; }
-int get_i2s_dout_gpio(void) { return GPIO_NUM_6; }
-int get_i2s_din_gpio(void) { return GPIO_NUM_4; }
+int get_i2s_mclk_gpio(void) { return -1; }
+int get_i2s_bclk_gpio(void) { return I2S_BCK_GPIO; }
+int get_i2s_lrck_gpio(void) { return I2S_WS_LRCK_GPIO; }
+int get_i2s_dout_gpio(void) { return I2S_DATA_OUT_GPIO; }
+int get_i2s_din_gpio(void) { return I2S_DATA_IN_GPIO; }
 
 int get_es7243_mclk_gpio(void) { return -1; }

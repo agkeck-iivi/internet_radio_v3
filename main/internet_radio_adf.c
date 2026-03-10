@@ -42,7 +42,9 @@ static const char *TAG = "INTERNET_RADIO";
 // Volume control
 #define INITIAL_VOLUME 60
 
-#define IR_TX_GPIO_NUM 20
+#include "gpio_assignments.h"
+
+#define IR_TX_GPIO_NUM IR_TX_GPIO
 
 #define BUTTON_POLLING_PERIOD_MS 100
 

@@ -19,13 +19,14 @@ static lv_display_t *g_display = NULL;
 static const char *TAG = "init_lvgl_ssd1306";
 
 // pin, geometry, and lvgl parameter configurations.
+#include "gpio_assignments.h"
 #define LCD_PIXEL_CLOCK_HZ (4 * 1000 * 1000)
 #define LCD_HOST SPI2_HOST
-#define PIN_NUM_SCLK 11 // 12
-#define PIN_NUM_MOSI 12 // 11
-#define PIN_NUM_RST 13
-#define PIN_NUM_DC 14
-#define PIN_NUM_CS 8
+#define PIN_NUM_SCLK DISPLAY_SPI_SCLK_GPIO
+#define PIN_NUM_MOSI DISPLAY_SPI_MOSI_GPIO
+#define PIN_NUM_RST DISPLAY_SPI_RST_GPIO
+#define PIN_NUM_DC DISPLAY_SPI_DC_GPIO
+#define PIN_NUM_CS DISPLAY_SPI_CS_GPIO
 
 // The pixel number in horizontal and vertical
 #define LCD_H_RES 128

@@ -41,13 +41,16 @@ extern int station_count;
 extern int current_station;
 extern audio_pipeline_components_t audio_pipeline_components;
 
-#define VOLUME_GPIO_A 42
-#define VOLUME_GPIO_B 2
-#define VOLUME_PRESS_GPIO 1
+#include "gpio_assignments.h"
 
-#define STATION_GPIO_A 39
-#define STATION_GPIO_B 40
-#define STATION_PRESS_GPIO 41
+// Alias to the consolidated pinout definitions
+#define VOLUME_GPIO_A VOLUME_ENCODER_A_GPIO
+#define VOLUME_GPIO_B VOLUME_ENCODER_B_GPIO
+#define VOLUME_PRESS_GPIO VOLUME_ENCODER_PRESS_GPIO
+
+#define STATION_GPIO_A STATION_ENCODER_A_GPIO
+#define STATION_GPIO_B STATION_ENCODER_B_GPIO
+#define STATION_PRESS_GPIO STATION_ENCODER_PRESS_GPIO
 
 // polling periods
 #define VOLUME_POLLING_PERIOD_MS 100
@@ -70,8 +73,8 @@ extern audio_pipeline_components_t audio_pipeline_components;
 // Set these to variables to allow future runtime configuration
 // IFTT: If these variables change at runtime, ensure the logic in
 // volume_press_task dynamically recalculates min_sleep_threshold_us.
-uint32_t g_light_sleep_delay_ms = 10 * 1000; // for testing
-// uint32_t g_light_sleep_delay_ms = 20 * 60 * 1000;  // for prod
+// uint32_t g_light_sleep_delay_ms = 10 * 1000; // for testing
+uint32_t g_light_sleep_delay_ms = 20 * 60 * 1000;  // for prod
 uint32_t g_deep_sleep_delay_ms = 2 * 60 * 60 * 1000;
 
 typedef enum {
@@ -81,7 +84,7 @@ typedef enum {
 } power_save_mode_t;
 
 // Set the current power saving strategy as a variable for runtime adjustment
-power_save_mode_t g_power_save_mode = POWER_SAVE_LIGHT_ONLY;
+power_save_mode_t g_power_save_mode = POWER_SAVE_LIGHT_DEEP;
 // Lockout period after wakeup to ignore ghost pulses (500ms)
 #define WAKEUP_LOCKOUT_US (500 * 1000)
 
