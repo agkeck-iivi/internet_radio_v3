@@ -4,7 +4,7 @@ set(COMPONENT_PRIV_REQUIRES audio_sal audio_hal driver esp_peripherals)
 
 if(CONFIG_AUDIO_BOARD_CUSTOM)
 message(STATUS "Current board name is " CONFIG_AUDIO_BOARD_CUSTOM)
-list(APPEND COMPONENT_ADD_INCLUDEDIRS .)
+list(APPEND COMPONENT_ADD_INCLUDEDIRS . "../../main")
 set(COMPONENT_SRCS
 ./board.c
 ./board_pins_config.c
