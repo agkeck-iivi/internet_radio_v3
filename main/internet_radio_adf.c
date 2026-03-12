@@ -67,7 +67,7 @@ typedef struct {
   bool has_state;
 } wifi_resume_state_t;
 
-static wifi_resume_state_t g_wifi_resume_state = {0};
+static RTC_DATA_ATTR wifi_resume_state_t g_wifi_resume_state = {0};
 
 #define BITRATE_HISTORY_SIZE 10
 static int g_bitrate_history[BITRATE_HISTORY_SIZE] = {0};
@@ -293,6 +293,27 @@ static void event_handler(void *arg, esp_event_base_t event_base,
 static void wifi_init_sta(void) {
   /* Start Wi-Fi in station mode */
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+
+  if (g_wifi_resume_state.has_state) {
+    ESP_LOGI(TAG, "Applying cached WiFi scan config (Fast Scan)...");
+    wifi_config_t sta_cfg;
+    ESP_ERROR_CHECK(esp_wifi_get_config(WIFI_IF_STA, &sta_cfg));
+    sta_cfg.sta.scan_method = WIFI_FAST_SCAN;
+    sta_cfg.sta.bssid_set = true;
+    memcpy(sta_cfg.sta.bssid, g_wifi_resume_state.bssid, 6);
+    sta_cfg.sta.channel = g_wifi_resume_state.channel;
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_cfg));
+
+    // Configure Netif for Static IP (bypass DHCP) BEFORE wifi_start
+    esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    if (netif) {
+      ESP_LOGI(TAG, "Restoring Static IP: " IPSTR, IP2STR(&g_wifi_resume_state.ip_info.ip));
+      esp_netif_dhcpc_stop(netif);
+      esp_netif_set_ip_info(netif, &g_wifi_resume_state.ip_info);
+      esp_netif_set_dns_info(netif, ESP_NETIF_DNS_MAIN, &g_wifi_resume_state.dns_info);
+    }
+  }
+
   ESP_ERROR_CHECK(esp_wifi_start());
   ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
 }
@@ -639,6 +660,13 @@ void app_main(void) {
 
   ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
 
+  // If waking from deep sleep, we want to try Fast Connect immediately
+  if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0 || wakeup_reason == ESP_SLEEP_WAKEUP_TIMER) {
+     if (g_wifi_resume_state.has_state) {
+        ESP_LOGI(TAG, "Deep sleep wakeup: Cached WiFi state found.");
+     }
+  }
+
   // Check for forced provisioning (Volume button held during boot)
   init_encoder_switches();
   if (is_volume_switch_pressed()) {
@@ -666,107 +694,27 @@ void app_main(void) {
     wifi_prov_scheme_ble_set_service_uuid(custom_service_uuid);
     ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_1, NULL,
                                                      service_name, NULL));
-  } else {
-    ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi");
+  ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi");
   }
 
-  ESP_LOGI(TAG, "Waiting for Wi-Fi connection...");
+  ESP_LOGI(TAG, "Starting Wi-Fi...");
   wifi_init_sta();
-  xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, false, true,
-                      portMAX_DELAY);
-  ESP_LOGI(TAG, "Wi-Fi Connected.");
-  start_web_server();
 
-  // wifi_event_group = xEventGroupCreate();
-
-  // ESP_ERROR_CHECK(esp_event_loop_create_default());
-  // ESP_ERROR_CHECK(esp_event_handler_register(WIFI_PROV_EVENT,
-  // ESP_EVENT_ANY_ID, &event_handler, NULL));
-  // ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
-  // &event_handler, NULL));
-  // ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
-  // &event_handler, NULL));
-
-  // esp_netif_create_default_wifi_sta();
-
-  // wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-  // ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-  // wifi_prov_mgr_config_t config = {
-  //     .scheme = wifi_prov_scheme_ble,
-  //     .scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM
-  // };
-
-  // ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
-
-  // bool provisioned = false;
-  // ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
-  // provisioned = false; // force provisioning for testing comment this line
-  // for production uint8_t custom_service_uuid[] = {
-  //     /* LSB <---------------------------------------
-  //      * ---------------------------------------> MSB */
-  //     0xb4, 0xdf, 0x5a, 0x1c, 0x3f, 0x6b, 0xf4, 0xbf,
-  //     0xea, 0x4a, 0x82, 0x03, 0x04, 0x90, 0x1a, 0x02,
-  // };
-
-  // if (!provisioned) {
-  //     ESP_LOGI(TAG, "Starting provisioning");
-
-  //     char service_name[20];
-  //     get_device_service_name(service_name, sizeof(service_name));
-
-  //     wifi_prov_scheme_ble_set_service_uuid(custom_service_uuid);
-  //     ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_1,
-  //     NULL, service_name, NULL));
-  // }
-  // else {
-  //     ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi");
-  //     wifi_prov_mgr_deinit();
-
-  //     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT,
-  //     ESP_EVENT_ANY_ID, &event_handler, NULL));
-  //     /* Start Wi-Fi station */
-  //     wifi_init_sta();
-
-  // }
-
-  // const TickType_t wifi_connect_timeout = portMAX_DELAY; //
-  // pdMS_TO_TICKS(30000); // 30 seconds ESP_LOGI(TAG, "Waiting for Wi-Fi
-  // connection..."); we should probably have a timeout here.  If it can't
-  // connect, restart provisioning. EventBits_t bits =
-  // xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, pdFALSE, pdTRUE,
-  // wifi_connect_timeout);
-
-  // if ((bits & WIFI_CONNECTED_BIT) == 0) {
-  //     ESP_LOGE(TAG, "Failed to connect to Wi-Fi within 30 seconds. Resetting
-  //     provisioning and restarting.");
-  //     // Erase provisioning data
-  //     wifi_prov_mgr_reset_provisioning();
-  //     vTaskDelay(pdMS_TO_TICKS(2000)); // Delay to allow logging
-  //     esp_restart();
-  // }
-
-  ESP_LOGI(TAG, "Wi-Fi Connected.");
-
+  // Initialize hardware while Wi-Fi connects in the background
   esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
   periph_set = esp_periph_set_init(&periph_cfg);
 
   ESP_LOGI(TAG, "Start audio codec chip");
   board_handle = audio_board_init(); // Assign to global
-  // explicit start the codec, I'm not sure why it was not started elsewhere.
   board_handle->audio_hal->audio_codec_ctrl(AUDIO_HAL_CODEC_MODE_BOTH,
                                             AUDIO_HAL_CTRL_START);
   audio_hal_set_volume(board_handle->audio_hal, initial_volume);
   audio_hal_set_mute(board_handle->audio_hal, initial_mute);
   update_volume_slider(initial_volume);
-  // audio_hal_get_volume(board_handle->audio_hal, &temp_volume);
-  // ESP_LOGI(TAG, "Initial volume set to %d", temp_volume);
 
-  ESP_LOGI(TAG, "Set up  event listener");
+  ESP_LOGI(TAG, "Set up event listener");
   audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
-  evt = audio_event_iface_init(&evt_cfg); // Assign to static global
-
-  ESP_LOGI(TAG, "Listening event from peripherals");
+  evt = audio_event_iface_init(&evt_cfg);
   audio_event_iface_set_listener(esp_periph_set_get_event_iface(periph_set),
                                  evt);
 
@@ -776,6 +724,12 @@ void app_main(void) {
   ESP_LOGI(TAG, "Sending Audio ON signal");
   ir_remote_turn_audio_on();
 #endif
+
+  ESP_LOGI(TAG, "Waiting for Wi-Fi connection...");
+  xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, false, true,
+                      portMAX_DELAY);
+  ESP_LOGI(TAG, "Wi-Fi Connected.");
+  start_web_server();
 
   ESP_LOGI(TAG, "Starting initial stream: %s, %s",
            radio_stations[current_station].call_sign,
