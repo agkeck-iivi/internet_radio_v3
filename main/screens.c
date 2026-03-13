@@ -110,11 +110,11 @@ void process_ui_updates(void) {
         // Update Mute M position if it exists and is not hidden
         if (mute_m_label) {
           lv_coord_t h = lv_obj_get_height(volume_slider);
-          // LVGL sliders are usually 0 at bottom, 100 at top if vertical
-          // Center of the filled part is (volume/2)% from bottom
-          lv_coord_t y_offset = (h * (100 - msg.data.value / 2)) / 100;
-          lv_obj_set_y(mute_m_label,
-                       y_offset - 7); // -7 to center the 14px label height
+          lv_coord_t label_h = lv_obj_get_height(mute_m_label);
+          lv_coord_t y = (h * (100 - msg.data.value / 2)) / 100 - (label_h / 2);
+          if (y < 0) y = 0;
+          if (y > h - label_h) y = h - label_h;
+          lv_obj_set_y(mute_m_label, y);
         }
       }
       break;
@@ -163,8 +163,11 @@ void process_ui_updates(void) {
           // Ensure position is correct when showing
           lv_coord_t h = lv_obj_get_height(volume_slider);
           int vol = lv_slider_get_value(volume_slider);
-          lv_coord_t y_offset = (h * (100 - vol / 2)) / 100;
-          lv_obj_set_y(mute_m_label, y_offset - 7);
+          lv_coord_t label_h = lv_obj_get_height(mute_m_label);
+          lv_coord_t y = (h * (100 - vol / 2)) / 100 - (label_h / 2);
+          if (y < 0) y = 0;
+          if (y > h - label_h) y = h - label_h;
+          lv_obj_set_y(mute_m_label, y);
         } else {
           lv_obj_add_flag(mute_m_label, LV_OBJ_FLAG_HIDDEN);
         }
@@ -207,7 +210,7 @@ static void create_home_screen_widgets(lv_obj_t *parent) {
 
   // 1.1 Mute Indicator 'M' (Centered on the filled part of slider)
   mute_m_label = lv_label_create(parent);
-  lv_label_set_text(mute_m_label, "M");
+  lv_label_set_text(mute_m_label, LV_SYMBOL_CLOSE);
   lv_obj_set_style_text_font(mute_m_label, &lv_font_montserrat_12, 0);
   lv_obj_set_style_text_color(mute_m_label, lv_palette_main(LV_PALETTE_RED), 0);
   lv_obj_set_style_bg_color(mute_m_label, lv_color_white(), 0);
