@@ -94,7 +94,7 @@ void process_ui_updates(void) {
     switch (msg.type) {
     case UPDATE_BITRATE:
       if (bitrate_label)
-        lv_label_set_text_fmt(bitrate_label, "%d KBPS", msg.data.value);
+        lv_label_set_text_fmt(bitrate_label, "%d kb/s", msg.data.value);
       break;
     case UPDATE_STATION_NAME:
       if (callsign_label)
@@ -269,7 +269,7 @@ static void create_home_screen_widgets(lv_obj_t *parent) {
   lv_obj_set_style_text_letter_space(origin_label, 1, 0);
   // bitrate label
   bitrate_label = lv_label_create(text_container);
-  lv_label_set_text_fmt(bitrate_label, "%d KBPS", g_bitrate_kbps);
+  lv_label_set_text_fmt(bitrate_label, "%d kb/s", g_bitrate_kbps);
   lv_obj_set_style_text_font(bitrate_label, &lv_font_montserrat_14,
                              0); // Use default font for smaller text
   lv_obj_set_style_text_letter_space(bitrate_label, 1, 0);
