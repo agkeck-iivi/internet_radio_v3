@@ -382,7 +382,8 @@ static void volume_press_task(void *pvParameters) {
         vTaskDelay(pdMS_TO_TICKS(100));
 
         // Restart pipeline
-        audio_pipeline_manager_wakeup(&audio_pipeline_components);
+        extern audio_event_iface_handle_t evt;
+        audio_pipeline_manager_wakeup(&audio_pipeline_components, evt);
 
         // Reset watchdog to avoid spurious restarts
         reset_watchdog_counter();

@@ -3,6 +3,7 @@
 
 #include "audio_element.h"
 #include "audio_pipeline.h"
+#include "audio_event_iface.h"
 #include "esp_err.h"
 #include <stdint.h>
 
@@ -71,9 +72,10 @@ esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
 /**
  * @brief Re-runs the audio pipeline after waking from sleep.
  * @param components Pointer to audio pipeline components.
+ * @param evt Event interface handle to link to the pipeline.
  */
-esp_err_t
-audio_pipeline_manager_wakeup(audio_pipeline_components_t *components);
+esp_err_t audio_pipeline_manager_wakeup(audio_pipeline_components_t *components,
+                                        audio_event_iface_handle_t evt);
 
 #ifdef __cplusplus
 }

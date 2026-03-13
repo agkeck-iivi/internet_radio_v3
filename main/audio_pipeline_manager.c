@@ -15,6 +15,7 @@
 #include "esp_task_wdt.h"
 #include "sdkconfig.h"
 #include "ir_remote.h"
+#include "audio_event_iface.h"
 
 extern audio_pipeline_components_t audio_pipeline_components;
 extern volatile bool g_is_pipeline_running;
@@ -322,7 +323,8 @@ esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
 }
 
 esp_err_t
-audio_pipeline_manager_wakeup(audio_pipeline_components_t *components) {
+audio_pipeline_manager_wakeup(audio_pipeline_components_t *components,
+                              audio_event_iface_handle_t evt) {
   if (components == NULL) {
     return ESP_ERR_INVALID_ARG;
   }
@@ -335,6 +337,11 @@ audio_pipeline_manager_wakeup(audio_pipeline_components_t *components) {
   if (ret != ESP_OK) {
     ESP_LOGE(TAG, "Failed to recreate pipeline after wakeup: %d", ret);
     return ret;
+  }
+
+  // Link event listener if provided
+  if (evt) {
+    audio_pipeline_set_listener(components->pipeline, evt);
   }
 
   // Re-run the pipeline

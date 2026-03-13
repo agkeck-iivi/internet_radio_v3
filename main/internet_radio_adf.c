@@ -75,7 +75,7 @@ static int g_history_index = 0;
 
 static audio_board_handle_t board_handle =
     NULL; // make this global during debugging
-static audio_event_iface_handle_t evt = NULL;
+audio_event_iface_handle_t evt = NULL;
 static esp_periph_set_handle_t periph_set = NULL;
 // g_ir_tx_channel is no longer needed globally as it's managed by the ir_remote component
 
@@ -113,6 +113,52 @@ static void save_current_station_to_nvs(int station_index) {
   }
 
   nvs_close(nvs_handle);
+}
+
+static void save_wifi_state_to_nvs(void) {
+  if (!g_wifi_resume_state.has_state)
+    return;
+  nvs_handle_t nvs_handle;
+  esp_err_t err = nvs_open("storage", NVS_READWRITE, &nvs_handle);
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "Error (%s) opening NVS for wifi state save!",
+             esp_err_to_name(err));
+    return;
+  }
+  nvs_set_blob(nvs_handle, "wifi_bssid", g_wifi_resume_state.bssid, 6);
+  nvs_set_u8(nvs_handle, "wifi_chan", g_wifi_resume_state.channel);
+  nvs_set_i32(nvs_handle, "wifi_ip", g_wifi_resume_state.ip_info.ip.addr);
+  nvs_set_i32(nvs_handle, "wifi_gw", g_wifi_resume_state.ip_info.gw.addr);
+  nvs_set_i32(nvs_handle, "wifi_mask", g_wifi_resume_state.ip_info.netmask.addr);
+  nvs_set_i32(nvs_handle, "wifi_dns",
+              g_wifi_resume_state.dns_info.ip.u_addr.ip4.addr);
+  nvs_commit(nvs_handle);
+  nvs_close(nvs_handle);
+  ESP_LOGI(TAG, "WiFi state saved to NVS (Cold Boot Optimization)");
+}
+
+static void load_wifi_state_from_nvs(void) {
+  nvs_handle_t nvs_handle;
+  esp_err_t err = nvs_open("storage", NVS_READONLY, &nvs_handle);
+  if (err != ESP_OK)
+    return;
+  size_t required_size = 6;
+  err = nvs_get_blob(nvs_handle, "wifi_bssid", g_wifi_resume_state.bssid,
+                     &required_size);
+  if (err != ESP_OK) {
+    nvs_close(nvs_handle);
+    return;
+  }
+  nvs_get_u8(nvs_handle, "wifi_chan", &g_wifi_resume_state.channel);
+  nvs_get_i32(nvs_handle, "wifi_ip", (int32_t *)&g_wifi_resume_state.ip_info.ip.addr);
+  nvs_get_i32(nvs_handle, "wifi_gw", (int32_t *)&g_wifi_resume_state.ip_info.gw.addr);
+  nvs_get_i32(nvs_handle, "wifi_mask", (int32_t *)&g_wifi_resume_state.ip_info.netmask.addr);
+  nvs_get_i32(nvs_handle, "wifi_dns",
+              (int32_t *)&g_wifi_resume_state.dns_info.ip.u_addr.ip4.addr);
+  g_wifi_resume_state.dns_info.ip.type = ESP_IPADDR_TYPE_V4;
+  g_wifi_resume_state.has_state = true;
+  nvs_close(nvs_handle);
+  ESP_LOGI(TAG, "WiFi state loaded from NVS (Ready for Fast Connect)");
 }
 
 void change_station(int new_station_index) {
@@ -173,6 +219,11 @@ void change_station(int new_station_index) {
   // Restore mute state after pipeline is started
   if (board_handle && board_handle->audio_hal) {
     audio_hal_set_mute(board_handle->audio_hal, get_mute_state());
+  }
+
+  // Link event listener
+  if (evt) {
+    audio_pipeline_set_listener(audio_pipeline_components.pipeline, evt);
   }
 
   if (ret != ESP_OK) {
@@ -248,8 +299,14 @@ static void event_handler(void *arg, esp_event_base_t event_base,
     esp_netif_dns_info_t dns;
     if (esp_netif_get_dns_info(event->esp_netif, ESP_NETIF_DNS_MAIN, &dns) ==
         ESP_OK) {
+      ESP_LOGI(TAG, "Main DNS: " IPSTR, IP2STR(&dns.ip.u_addr.ip4));
       g_wifi_resume_state.dns_info = dns;
       g_wifi_resume_state.has_state = true;
+      save_wifi_state_to_nvs();
+    }
+    if (esp_netif_get_dns_info(event->esp_netif, ESP_NETIF_DNS_BACKUP, &dns) ==
+        ESP_OK) {
+      ESP_LOGI(TAG, "Backup DNS: " IPSTR, IP2STR(&dns.ip.u_addr.ip4));
     }
 
     xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
@@ -266,14 +323,17 @@ static void event_handler(void *arg, esp_event_base_t event_base,
       return;
     }
 
-    // Fallback logic for Strategy V3 (DHCP Caching)
+    // Fallback logic for Cached DHCP state failure
     if (g_wifi_resume_state.has_state) {
-      ESP_LOGW(TAG, "WiFi Resume failed or connection dropped. Falling back to "
+      ESP_LOGW(TAG, "Fast connect failed or connection dropped. Falling back to "
                     "full DHCP...");
       g_wifi_resume_state.has_state = false; // Disable resume for next try
 
       esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
       if (netif) {
+        // Clear manual DNS before starting DHCP to avoid interference
+        esp_netif_dns_info_t dns = {0};
+        esp_netif_set_dns_info(netif, ESP_NETIF_DNS_MAIN, &dns);
         esp_netif_dhcpc_start(netif);
       }
 
@@ -295,7 +355,7 @@ static void wifi_init_sta(void) {
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 
   if (g_wifi_resume_state.has_state) {
-    ESP_LOGI(TAG, "Applying cached WiFi scan config (Fast Scan)...");
+    ESP_LOGI(TAG, "Applying cached WiFi state (Fast Connect + Static IP)...");
     wifi_config_t sta_cfg;
     ESP_ERROR_CHECK(esp_wifi_get_config(WIFI_IF_STA, &sta_cfg));
     sta_cfg.sta.scan_method = WIFI_FAST_SCAN;
@@ -307,10 +367,14 @@ static void wifi_init_sta(void) {
     // Configure Netif for Static IP (bypass DHCP) BEFORE wifi_start
     esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
     if (netif) {
-      ESP_LOGI(TAG, "Restoring Static IP: " IPSTR, IP2STR(&g_wifi_resume_state.ip_info.ip));
+      ESP_LOGI(TAG, "Restoring Static IP: " IPSTR,
+               IP2STR(&g_wifi_resume_state.ip_info.ip));
       esp_netif_dhcpc_stop(netif);
       esp_netif_set_ip_info(netif, &g_wifi_resume_state.ip_info);
-      esp_netif_set_dns_info(netif, ESP_NETIF_DNS_MAIN, &g_wifi_resume_state.dns_info);
+      ESP_LOGI(TAG, "Restoring DNS: " IPSTR,
+               IP2STR(&g_wifi_resume_state.dns_info.ip.u_addr.ip4));
+      esp_netif_set_dns_info(netif, ESP_NETIF_DNS_MAIN,
+                             &g_wifi_resume_state.dns_info);
     }
   }
 
@@ -485,6 +549,7 @@ void set_wifi_sleep_mode(bool sleeping) {
       if (netif) {
         esp_netif_dhcpc_stop(netif);
         esp_netif_set_ip_info(netif, &g_wifi_resume_state.ip_info);
+        ESP_LOGI(TAG, "Restoring DNS: " IPSTR, IP2STR(&g_wifi_resume_state.dns_info.ip.u_addr.ip4));
         esp_netif_set_dns_info(netif, ESP_NETIF_DNS_MAIN,
                                &g_wifi_resume_state.dns_info);
       }
@@ -540,6 +605,8 @@ void app_main(void) {
     err = nvs_flash_init();
   }
   ESP_ERROR_CHECK(err);
+
+  load_wifi_state_from_nvs();
 
   init_station_data();
 
@@ -697,15 +764,16 @@ void app_main(void) {
   ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi");
   }
 
+  // Start Wi-Fi (non-blocking scan/associate)
   ESP_LOGI(TAG, "Starting Wi-Fi...");
   wifi_init_sta();
 
-  // Initialize hardware while Wi-Fi connects in the background
+  // Initialize hardware ONLY while Wi-Fi connects in the background
   esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
   periph_set = esp_periph_set_init(&periph_cfg);
 
   ESP_LOGI(TAG, "Start audio codec chip");
-  board_handle = audio_board_init(); // Assign to global
+  board_handle = audio_board_init();
   board_handle->audio_hal->audio_codec_ctrl(AUDIO_HAL_CODEC_MODE_BOTH,
                                             AUDIO_HAL_CTRL_START);
   audio_hal_set_volume(board_handle->audio_hal, initial_volume);
@@ -729,29 +797,22 @@ void app_main(void) {
   xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, false, true,
                       portMAX_DELAY);
   ESP_LOGI(TAG, "Wi-Fi Connected.");
-  start_web_server();
 
-  ESP_LOGI(TAG, "Starting initial stream: %s, %s",
-           radio_stations[current_station].call_sign,
-           radio_stations[current_station].origin);
+  // Start audio pipeline AFTER WiFi is confirmed connected
+  ESP_LOGI(TAG, "Starting audio pipeline...");
   err = create_audio_pipeline(&audio_pipeline_components,
                               radio_stations[current_station].codec,
                               radio_stations[current_station].uri);
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "Failed to create initial audio pipeline, error: %d", err);
-    // Cleanup before returning
-    if (evt)
-      audio_event_iface_destroy(evt);
-    if (periph_set)
-      esp_periph_set_destroy(periph_set);
-    // audio_board_deinit(board_handle); // If applicable
-    return;
+  if (err == ESP_OK) {
+    reset_throughput_history();
+    audio_pipeline_run(audio_pipeline_components.pipeline);
+    if (evt) {
+      audio_pipeline_set_listener(audio_pipeline_components.pipeline, evt);
+    }
+    g_is_pipeline_running = true;
   }
 
-  ESP_LOGI(TAG, "Start audio_pipeline");
-  reset_throughput_history();
-  audio_pipeline_run(audio_pipeline_components.pipeline);
-  g_is_pipeline_running = true;
+  start_web_server();
 
   xTaskCreate(data_throughput_task, "data_throughput_task", 3 * 1024, NULL, 5,
               NULL);
@@ -777,16 +838,44 @@ void app_main(void) {
         msg.source == (void *)audio_pipeline_components.http_stream_reader &&
         msg.cmd == AEL_MSG_CMD_REPORT_STATUS &&
         (int)msg.data == AEL_STATUS_ERROR_OPEN) {
-      ESP_LOGW(TAG, "[ * ] Restart stream");
+      
+      static int open_error_count = 0;
+      open_error_count++;
+      ESP_LOGW(TAG, "[ * ] Restart stream (attempt %d)", open_error_count);
+
+      if (open_error_count >= 3 && g_wifi_resume_state.has_state) {
+        ESP_LOGE(TAG, "Repeated open errors. Stale WiFi resume state suspected. Clearing cache and falling back...");
+        g_wifi_resume_state.has_state = false;
+        
+        esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+        if (netif) {
+          esp_netif_dhcpc_start(netif);
+        }
+        
+        wifi_config_t sta_cfg;
+        esp_wifi_get_config(WIFI_IF_STA, &sta_cfg);
+        sta_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+        sta_cfg.sta.bssid_set = false;
+        sta_cfg.sta.channel = 0;
+        esp_wifi_set_config(WIFI_IF_STA, &sta_cfg);
+        
+        esp_wifi_connect();
+        open_error_count = 0; // Reset after fallback trigger
+      }
+
       audio_pipeline_stop(audio_pipeline_components.pipeline);
       audio_pipeline_wait_for_stop(audio_pipeline_components.pipeline);
       audio_element_reset_state(audio_pipeline_components.codec_decoder);
       audio_element_reset_state(audio_pipeline_components.i2s_stream_writer);
       audio_pipeline_reset_ringbuffer(audio_pipeline_components.pipeline);
       audio_pipeline_reset_items_state(audio_pipeline_components.pipeline);
+      vTaskDelay(pdMS_TO_TICKS(500)); // Brief delay before retry
       audio_pipeline_run(audio_pipeline_components.pipeline);
       continue;
     }
+
+    // Reset open error count on successful start or other events
+    // (Note: in a real app you might check for AEL_STATUS_STATE_RUNNING)
   }
 
   ESP_LOGI(TAG, "Stopping audio_pipeline");
