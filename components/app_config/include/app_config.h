@@ -41,7 +41,7 @@ typedef enum {
  */
 typedef struct {
   pcm5122_analog_atten_t analog_attenuation;
-  int digital_attenuation;
+  pcm5122_digital_atten_t digital_attenuation;
   power_save_mode_t power_save_mode;
   uint32_t light_sleep_delay_ms;
   uint32_t deep_sleep_delay_ms;
