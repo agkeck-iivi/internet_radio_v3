@@ -22,6 +22,7 @@
 
 #include <limits.h>
 
+#include "app_config.h"
 #include "board.h"
 #include "esp_netif.h"
 #include "esp_timer.h"
@@ -31,7 +32,6 @@
 #include "pcm5122_driver.h"
 #include "screens.h"
 #include "station_data.h"
-#include "app_config.h"
 #include <inttypes.h>
 
 static const char *TAG = "encoders";
@@ -71,10 +71,6 @@ extern audio_pipeline_components_t audio_pipeline_components;
 #define REBOOT_MESSAGE_DISPLAY_TIME_MS 100
 // Time window to detect a second click for double-click actions
 #define DOUBLE_CLICK_TIMEOUT_MS 300
-// Set these to variables to allow future runtime configuration
-// IFTT: If these variables change at runtime, ensure the logic in
-// volume_press_task dynamically recalculates min_sleep_threshold_us.
-
 // Lockout period after wakeup to ignore ghost pulses (500ms)
 #define WAKEUP_LOCKOUT_US (500 * 1000)
 
@@ -250,7 +246,7 @@ static void volume_press_task(void *pvParameters) {
 
 #ifdef CONFIG_IR_REMOTE_ENABLED
         if (g_runtime_config.ir_is_enabled) {
-            ir_remote_toggle_audio();
+          ir_remote_toggle_audio();
         }
 #endif
       } else {
@@ -275,7 +271,8 @@ static void volume_press_task(void *pvParameters) {
     // Check for light sleep timeout if muted and power saving is enabled
     if (is_muted && g_runtime_config.power_save_mode != POWER_SAVE_NONE) {
       int64_t now = esp_timer_get_time();
-      if (now - mute_start_time > (int64_t)g_runtime_config.light_sleep_delay_ms * 1000) {
+      if (now - mute_start_time >
+          (int64_t)g_runtime_config.light_sleep_delay_ms * 1000) {
         ESP_LOGI(TAG, "Muted for >%" PRIu32 " ms. Entering light sleep...",
                  g_runtime_config.light_sleep_delay_ms);
 
@@ -318,7 +315,8 @@ static void volume_press_task(void *pvParameters) {
                  actual_sleep_duration_us, cause);
 
         // Calculate safety threshold based on current delay (90%)
-        uint64_t min_sleep_threshold_us = (uint64_t)g_runtime_config.deep_sleep_delay_ms * 900;
+        uint64_t min_sleep_threshold_us =
+            (uint64_t)g_runtime_config.deep_sleep_delay_ms * 900;
 
         // ONLY enter deep sleep if in LIGHT_DEEP mode and it was a timer
         // timeout
