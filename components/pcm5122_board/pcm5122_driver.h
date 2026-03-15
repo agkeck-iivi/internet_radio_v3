@@ -60,6 +60,7 @@ esp_err_t pcm5122_config_i2s(audio_hal_codec_mode_t mode,
 
 esp_err_t pcm5122_set_voice_volume(int volume);
 esp_err_t pcm5122_get_voice_volume(int *volume);
+esp_err_t pcm5122_apply_analog_attenuation(void);
 
 esp_err_t pcm5122_set_mute(bool enable);
 esp_err_t pcm5122_get_mute(bool *mute);

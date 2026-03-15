@@ -212,7 +212,6 @@ static void volume_press_task(void *pvParameters) {
   ESP_LOGI(
       TAG,
       "Volume press button task started. [BUILD_ID: robust_deep_sleep_v7]");
-  uint64_t last_press_time = 0;
   while (1) {
     if (gpio_get_level(VOLUME_PRESS_GPIO) ==
         0) { // Button is pressed (active low)

@@ -289,6 +289,17 @@ esp_err_t pcm5122_set_mute(bool enable) {
   return res;
 }
 
+esp_err_t pcm5122_apply_analog_attenuation(void) {
+  esp_err_t res = pcm5122_write_reg(PCM5122_PAGE, 0x01); // Switch to Page 1
+  uint8_t atten_val =
+      (g_runtime_config.analog_attenuation == PCM5122_ANALOG_ATTEN_6DB) ? 0x11 : 0x00;
+  res |= pcm5122_write_reg(0x02, atten_val);
+  res |= pcm5122_write_reg(PCM5122_PAGE, 0x00); // Switch back to Page 0
+  ESP_LOGI(PCM_TAG, "Analog attenuation applied: %s",
+           (atten_val == 0x11) ? "-6dB" : "0dB");
+  return res;
+}
+
 esp_err_t pcm5122_get_mute(bool *mute) {
   uint8_t data;
   pcm5122_write_reg(PCM5122_PAGE, 0x00);

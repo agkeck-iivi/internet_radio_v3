@@ -74,10 +74,9 @@ static RTC_DATA_ATTR wifi_resume_state_t g_wifi_resume_state = {0};
 static int g_bitrate_history[BITRATE_HISTORY_SIZE] = {0};
 static int g_history_index = 0;
 
-static audio_board_handle_t board_handle =
-    NULL; // make this global during debugging
+audio_board_handle_t board_handle = NULL;
 audio_event_iface_handle_t evt = NULL;
-static esp_periph_set_handle_t periph_set = NULL;
+esp_periph_set_handle_t periph_set = NULL;
 // g_ir_tx_channel is no longer needed globally as it's managed by the ir_remote component
 
 volatile int g_bitrate_kbps = 0;
@@ -606,6 +605,8 @@ void app_main(void) {
     err = nvs_flash_init();
   }
   ESP_ERROR_CHECK(err);
+
+  load_app_config();
 
   load_wifi_state_from_nvs();
 

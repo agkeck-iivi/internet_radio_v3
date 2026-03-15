@@ -50,4 +50,15 @@ typedef struct {
 
 extern app_runtime_config_t g_runtime_config;
 
+/**
+ * @brief Load configuration from NVS.
+ *        If a key is missing, the default value remains.
+ */
+void load_app_config(void);
+
+/**
+ * @brief Save current configuration to NVS.
+ */
+void save_app_config(void);
+
 #endif // APP_CONFIG_H

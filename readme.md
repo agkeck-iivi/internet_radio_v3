@@ -25,6 +25,8 @@ Version 3 represents a significant refinement in performance, power management, 
 * **Advanced Power Management**: Introduced a configurable power-saving strategy supporting **Light Sleep** and **Deep Sleep** transitions. This includes robust watchdog protection to prevent system hangs during sleep-state changes.
 * **Dedicated IR Component**: Extracted Bose IR protocol logic into a reusable `ir_remote` component. The system now automatically synchronizes external audio power states during the device's boot and sleep cycles.
 * **UI & Observability**: Refined the LVGL interface with a queue-based thread-safety pattern, real-time throughput tracking (kb/s), and custom graphical indicators (e.g., specialized mute glyphs).
+* **Web Configuration**: Introduced a web interface for managing device settings (Analog/Digital attenuation, Power Save modes) with immediate runtime application.
+* **NVS Configuration Persistence**: All application settings are now persisted to NVS using individual keys, ensuring backward compatibility and state retention across reboots.
 * **Stability & Cleanup**: Factored all hardware assignments into a central GPIO header, implemented spurious encoder signal blanking on wakeup, and aligned the project with **ESP-IDF v5.4.3**.
 
 ### audio pipeline
@@ -92,23 +94,63 @@ The bose IR protocal is stateful: the on/off button performs different functions
 
 ### nvs
 
-### station data
+The system uses Non-Volatile Storage (NVS) to persist all critical states and settings:
+* **Application Settings**: Analog and Digital attenuation, Power Save mode, sleep delays, and IR transmitter status.
+* **Device State**: Current volume level, mute status, and the last selected station index.
+* **WiFi State**: Cached BSSID, channel, and IP configuration for "Fast Connect" boot optimizations.
+
+Settings are stored under the `app_config` namespace using individual keys for robust schema evolution.
+
+### application configuration
+
+The radio provides a web interface and a JSON API for real-time configuration. Access the interface at `http://<ESP32_IP_ADDRESS>/config`.
+
+#### Configuration Parameters
+
+| Parameter | Key | Values | Description |
+| :--- | :--- | :--- | :--- |
+| **Analog Attenuation** | `analog_attenuation` | `0` (0dB), `1` (-6dB) | Hardware gain stage control. |
+| **Digital Attenuation** | `digital_attenuation` | `0, 6, 12, ..., 48` | Digital signal scaling after hardware gain. |
+| **Power Save Mode** | `power_save_mode` | `0` (None), `1` (Light), `2` (Deep) | Sleep strategy selection. |
+| **Light Sleep Delay** | `light_sleep_delay_ms` | Milliseconds | Timeout to enter Light Sleep. |
+| **Deep Sleep Delay** | `deep_sleep_delay_ms` | Milliseconds | Additional timeout to move from Light to Deep Sleep. |
+| **Enable IR Remote** | `ir_is_enabled` | `true`, `false` | Master toggle for the IR transmitter. |
+
+#### API Access
+
+* **GET `/api/config`**: Returns the current application configuration.
+* **POST `/api/config`**: Updates the configuration immediately. Changes are persisted to NVS.
+
+Example update with all parameters:
+```bash
+curl -X POST -H "Content-Type: application/json" \
+     -d '{
+       "analog_attenuation": 1,
+       "digital_attenuation": 12,
+       "power_save_mode": 2,
+       "light_sleep_delay_ms": 30000,
+       "deep_sleep_delay_ms": 60000,
+       "ir_is_enabled": true
+     }' \
+     http://<ESP32_IP_ADDRESS>/api/config
+```
 
 Initial station data is stored in a constant array.  On first boot, if the spiffs is not initialized we create a default station json file based on the constant array.  Thereafter, on boot the spiffs should be found and the json file serves as the source of truth for station data.  We provide an API to load the station data from the json file and save the station data to the json file.
 
 To download the current stations:
 
-```{bash}
+```bash
 curl http://<ESP32_IP_ADDRESS>/api/stations -o stations.json
 ```
 
 To update the stations:
 
-```{bash}
+```bash
 curl -X POST -H "Content-Type: application/json" -d @stations.json http://<ESP32_IP_ADDRESS>/api/stations
 ```
 
 where the codec enum uses these values:
+
 0: MP3
 1: AAC
 2: OGG
