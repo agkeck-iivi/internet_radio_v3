@@ -16,15 +16,30 @@
 
 ## software
 
+### version 3 software highlights
+
+Version 3 represents a significant refinement in performance, power management, and hardware integration. Key changes include:
+
+* **Audio Hardware Migration**: Moved from the ES8388 codec to the high-performance **PCM5122 DAC**. This included implementing logarithmic volume scaling for a natural listening experience and custom digital ramp rates for glitch-free transitions.
+* **Boot Speed Optimization (Fast Connect)**: Cold boot time was reduced from ~21 seconds to **~6 seconds** by implementing WiFi state persistence in NVS. The system now caches BSSID, channel, IP, and DNS settings to bypass discovery and DHCP phases.
+* **Advanced Power Management**: Introduced a configurable power-saving strategy supporting **Light Sleep** and **Deep Sleep** transitions. This includes robust watchdog protection to prevent system hangs during sleep-state changes.
+* **Dedicated IR Component**: Extracted Bose IR protocol logic into a reusable `ir_remote` component. The system now automatically synchronizes external audio power states during the device's boot and sleep cycles.
+* **UI & Observability**: Refined the LVGL interface with a queue-based thread-safety pattern, real-time throughput tracking (kb/s), and custom graphical indicators (e.g., specialized mute glyphs).
+* **Stability & Cleanup**: Factored all hardware assignments into a central GPIO header, implemented spurious encoder signal blanking on wakeup, and aligned the project with **ESP-IDF v5.4.3**.
+
 ### audio pipeline
 
 The audio pipeline is virtually the same as in version 1.  We added an accumulator to count the bytes read from the http stream and a periodic task to calculate/update the bitrate display on the screen.  This task calculates a 10 second weighted average of one second bitrates.  When this weighted average is 0 we know that we have not received data for 10 seconds.  We use this signal along with a delay of 15 seconds to determine if we need to reboot the device.  If we have not received data for 10 seconds and we are at least 15 seconds since last boot we reboot the device.
 
 ### audio board
 
-Version 1 used the LyraT sdkconfig option to identify the audio board.  In version 2 we attempt to create a custom audio board with only the necessary components.  This attempt is partially successful. We can initialize and utilize the board but there is still a lot of cruft in the custom board definition.  We will need to clean this up.
+In Version 3, the radio migrated from the ES8388 (legacy LyraT design) to the high-performance **PCM5122 DAC** (Adafruit board).
 
-The es8388 driver that ships with esp-adf sets the gain on output 2 to -30 dB.  In order to use channel 2 I moved the driver into the es8388 board component and initialized the registers appropriately.  I think that the only linkage is through a global variable `MY_AUDIO_CODEC_ES8388_DEFAULT_HANDLE` defined in `es8388_driver.c`.  This variable contains pointers to functions that initilize and control the es8388 and is used to initialize the audio_hal.  We need to keep an eye out for other linkage since the old es8388 driver code is still in the path.
+The PCM5122 integration features:
+* **Custom Driver**: A dedicated driver implementation that adheres to ESP-ADF conventions while providing low-level register control.
+* **Analog Gain Control**: To manage the high output levels of the PCM5122, we implemented a 6 dB reduction in the analog gain stage (Page 1, Register 2).
+* **Logarithmic Volume Scaling**: Volume settings (0-100) are mapped logarithmically to the DAC's digital volume registers to provide a natural, linear-sounding response to the user.
+* **Attenuation Considerations**: Despite the 6 dB analog reduction, the output remains quite loud. Further digital or analog attenuation may be required in future revisions to better align the volume range with typical AUX-input sensitivities.
 
 ### encoders
 
@@ -104,6 +119,23 @@ For help finding stream URIs and codecs for your favorite stations, see the [Sta
 ### web update to station data
 
 We provide a web interface to update the station data at <ESP32_IP_ADDRESS>/api/stations (or just <ESP_IP_ADDRESS> where there is a link to station data.)  From the web interface we can add, remove, and update station data as well a reorder the list of stations.  The station data is saved to the spiffs and a reboot will apply the changes.
+
+## power management
+
+The radio implements a multi-stage power-saving strategy to minimize energy consumption when idle. 
+
+### Power Requirements Table
+
+The following table outlines the current draw and estimated annual energy costs for each operational state. Estimates assume 24/7 operation in the specified state and an electricity cost of **$0.15 per kWh**.
+
+| State | Current (mA) | Power (W) | Annual Energy (kWh) | Annual Cost ($)* |
+| :--- | :--- | :--- | :--- | :--- |
+| **None (Active)** | 190 | 0.95 | 8.32 | $1.25 |
+| **Light Sleep** | 18 | 0.09 | 0.79 | $0.12 |
+| **Deep Sleep** | ~8 (est.)† | 0.04 | 0.35 | $0.05 |
+
+*\*Costs are rounded to the nearest cent.*
+*†Deep sleep current is dominated by the DevKitC's onboard LDO quiescent current (~5mA) and Power LED (~3mA), as the ESP32-S3 chip itself draws <100µA in this state.*
 
 ## operation
 
