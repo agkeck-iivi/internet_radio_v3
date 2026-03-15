@@ -14,6 +14,7 @@
 #include <string.h>
 #include "esp_task_wdt.h"
 #include "sdkconfig.h"
+#include "app_config.h"
 #include "ir_remote.h"
 #include "audio_event_iface.h"
 
@@ -302,13 +303,17 @@ esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
   esp_task_wdt_deinit();
 
 #ifdef CONFIG_IR_REMOTE_ENABLED
-  ir_remote_turn_audio_off();
+  if (g_runtime_config.ir_is_enabled) {
+    ir_remote_turn_audio_off();
+  }
 #endif
 
   esp_light_sleep_start();
 
 #ifdef CONFIG_IR_REMOTE_ENABLED
-  ir_remote_turn_audio_on();
+  if (g_runtime_config.ir_is_enabled) {
+    ir_remote_turn_audio_on();
+  }
 #endif
 
   esp_task_wdt_config_t twdt_config = {

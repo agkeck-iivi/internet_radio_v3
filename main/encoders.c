@@ -31,6 +31,7 @@
 #include "pcm5122_driver.h"
 #include "screens.h"
 #include "station_data.h"
+#include "app_config.h"
 #include <inttypes.h>
 
 static const char *TAG = "encoders";
@@ -73,18 +74,7 @@ extern audio_pipeline_components_t audio_pipeline_components;
 // Set these to variables to allow future runtime configuration
 // IFTT: If these variables change at runtime, ensure the logic in
 // volume_press_task dynamically recalculates min_sleep_threshold_us.
-// uint32_t g_light_sleep_delay_ms = 10 * 1000; // for testing
-uint32_t g_light_sleep_delay_ms = 20 * 60 * 1000;  // for prod
-uint32_t g_deep_sleep_delay_ms = 2 * 60 * 60 * 1000;
 
-typedef enum {
-  POWER_SAVE_NONE,
-  POWER_SAVE_LIGHT_ONLY,
-  POWER_SAVE_LIGHT_DEEP
-} power_save_mode_t;
-
-// Set the current power saving strategy as a variable for runtime adjustment
-power_save_mode_t g_power_save_mode = POWER_SAVE_LIGHT_DEEP;
 // Lockout period after wakeup to ignore ghost pulses (500ms)
 #define WAKEUP_LOCKOUT_US (500 * 1000)
 
@@ -259,7 +249,9 @@ static void volume_press_task(void *pvParameters) {
         }
 
 #ifdef CONFIG_IR_REMOTE_ENABLED
-        ir_remote_toggle_audio();
+        if (g_runtime_config.ir_is_enabled) {
+            ir_remote_toggle_audio();
+        }
 #endif
       } else {
         // Timeout reached, no second click -> Single Click Action (Mute Toggle)
@@ -281,11 +273,11 @@ static void volume_press_task(void *pvParameters) {
     }
 
     // Check for light sleep timeout if muted and power saving is enabled
-    if (is_muted && g_power_save_mode != POWER_SAVE_NONE) {
+    if (is_muted && g_runtime_config.power_save_mode != POWER_SAVE_NONE) {
       int64_t now = esp_timer_get_time();
-      if (now - mute_start_time > (int64_t)g_light_sleep_delay_ms * 1000) {
-        ESP_LOGI(TAG, "Muted for >%u ms. Entering light sleep...",
-                 (unsigned int)g_light_sleep_delay_ms);
+      if (now - mute_start_time > (int64_t)g_runtime_config.light_sleep_delay_ms * 1000) {
+        ESP_LOGI(TAG, "Muted for >%" PRIu32 " ms. Entering light sleep...",
+                 g_runtime_config.light_sleep_delay_ms);
 
         // Disconnect WiFi before sleep to bypass bcn_timeout on wakeup
         set_wifi_sleep_mode(true);
@@ -293,14 +285,14 @@ static void volume_press_task(void *pvParameters) {
         // Enter sleep (logic inside audio_pipeline_manager.c)
         // Pass timer wakeup duration ONLY if Light+Deep mode is active
         uint64_t requested_sleep_us =
-            (g_power_save_mode == POWER_SAVE_LIGHT_DEEP)
-                ? ((uint64_t)g_deep_sleep_delay_ms * 1000)
+            (g_runtime_config.power_save_mode == POWER_SAVE_LIGHT_DEEP)
+                ? ((uint64_t)g_runtime_config.deep_sleep_delay_ms * 1000)
                 : 0;
         int64_t sleep_start_time = esp_timer_get_time();
 
         ESP_LOGI(TAG,
                  "Entering light sleep stage (requested %llu us, mode: %d)...",
-                 requested_sleep_us, (int)g_power_save_mode);
+                 requested_sleep_us, (int)g_runtime_config.power_save_mode);
 
         // Set sentinel to ensure lockout is active during the sleep/wake
         // transition
@@ -326,11 +318,11 @@ static void volume_press_task(void *pvParameters) {
                  actual_sleep_duration_us, cause);
 
         // Calculate safety threshold based on current delay (90%)
-        uint64_t min_sleep_threshold_us = (uint64_t)g_deep_sleep_delay_ms * 900;
+        uint64_t min_sleep_threshold_us = (uint64_t)g_runtime_config.deep_sleep_delay_ms * 900;
 
         // ONLY enter deep sleep if in LIGHT_DEEP mode and it was a timer
         // timeout
-        if (g_power_save_mode == POWER_SAVE_LIGHT_DEEP &&
+        if (g_runtime_config.power_save_mode == POWER_SAVE_LIGHT_DEEP &&
             cause == ESP_SLEEP_WAKEUP_TIMER &&
             actual_sleep_duration_us >= min_sleep_threshold_us) {
           ESP_LOGI(TAG, "Deep sleep timeout reached. Transitioning to system "

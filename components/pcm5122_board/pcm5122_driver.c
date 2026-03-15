@@ -7,13 +7,13 @@
 #include "i2c_bus.h"
 #include <math.h>
 #include <string.h>
+#include "app_config.h"
 
 static const char *PCM_TAG = "PCM5122_DRIVER";
 static i2c_bus_handle_t i2c_handle;
 static codec_dac_volume_config_t *dac_vol_handle;
 
-int g_digital_attenuation = PCM5122_DIGITAL_ATTEN_18DB;
-pcm5122_analog_atten_t g_analog_attenuation = PCM5122_ANALOG_ATTEN_6DB;
+
 
 #define PCM5122_DAC_VOL_CFG_DEFAULT()                                          \
   {                                                                            \
@@ -110,7 +110,7 @@ esp_err_t pcm5122_init(audio_hal_codec_config_t *cfg) {
   // Control is on Page 1, Register 2: Bit 4 (LAGN), Bit 0 (RAGN)
   // 0 = 0dB (2Vrms), 1 = -6dB (1Vrms)
   res |= pcm5122_write_reg(PCM5122_PAGE, 0x01); // Switch to Page 1
-  uint8_t atten_val = (g_analog_attenuation == PCM5122_ANALOG_ATTEN_6DB) ? 0x11 : 0x00;
+  uint8_t atten_val = (g_runtime_config.analog_attenuation == PCM5122_ANALOG_ATTEN_6DB) ? 0x11 : 0x00;
   res |= pcm5122_write_reg(0x02, atten_val);
 
   // Verification read-back
@@ -236,7 +236,7 @@ esp_err_t pcm5122_set_voice_volume(int volume) {
   if (volume <= 0) {
     reg_val = 255; // Muted
   } else {
-    reg_val = (uint8_t)(48 + g_digital_attenuation +
+    reg_val = (uint8_t)(48 + g_runtime_config.digital_attenuation +
                         80 * log10(100.0 / volume));
     if (reg_val > 255)
       reg_val = 255;

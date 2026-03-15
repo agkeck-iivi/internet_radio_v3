@@ -31,6 +31,7 @@
 #include "screens.h"
 // #include "sdkconfig.h"
 #include "internet_radio_adf.h"
+#include "app_config.h"
 #include "station_data.h"
 #include "web_server.h"
 #include "wifi_provisioning/manager.h"
@@ -787,10 +788,12 @@ void app_main(void) {
                                  evt);
 
 #ifdef CONFIG_IR_REMOTE_ENABLED
-  ESP_LOGI(TAG, "Initializing IR Remote Component");
-  ir_remote_init((gpio_num_t)IR_TX_GPIO_NUM, IR_PROTOCOL_BOSE);
-  ESP_LOGI(TAG, "Sending Audio ON signal");
-  ir_remote_turn_audio_on();
+  if (g_runtime_config.ir_is_enabled) {
+    ESP_LOGI(TAG, "Initializing IR Remote Component");
+    ir_remote_init((gpio_num_t)IR_TX_GPIO_NUM, IR_PROTOCOL_BOSE);
+    ESP_LOGI(TAG, "Sending Audio ON signal");
+    ir_remote_turn_audio_on();
+  }
 #endif
 
   ESP_LOGI(TAG, "Waiting for Wi-Fi connection...");
