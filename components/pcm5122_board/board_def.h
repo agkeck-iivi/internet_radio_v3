@@ -33,16 +33,31 @@
 #define BOARD_PA_GAIN (10)
 
 typedef enum {
-  PCM5122_ATTEN_0DB = 0, // 2Vrms (0dB analog gain)
-  PCM5122_ATTEN_6DB = 1, // 1Vrms (-6dB analog gain)
+  PCM5122_ANALOG_ATTEN_0DB = 0, // 2Vrms (0dB analog gain)
+  PCM5122_ANALOG_ATTEN_6DB = 1, // 1Vrms (-6dB analog gain)
 } pcm5122_analog_atten_t;
+
+typedef enum {
+  PCM5122_DIGITAL_ATTEN_0DB = 0,
+  PCM5122_DIGITAL_ATTEN_3DB = 6,   // 3dB * 2 steps/dB = 6
+  PCM5122_DIGITAL_ATTEN_6DB = 12,  // 6dB * 2 steps/dB = 12
+  PCM5122_DIGITAL_ATTEN_9DB = 18,
+  PCM5122_DIGITAL_ATTEN_12DB = 24,
+  PCM5122_DIGITAL_ATTEN_15DB = 30,
+  PCM5122_DIGITAL_ATTEN_18DB = 36,
+  PCM5122_DIGITAL_ATTEN_21DB = 42,
+  PCM5122_DIGITAL_ATTEN_24DB = 48,
+} pcm5122_digital_atten_t;
 
 // --- ANALOG ATTENUATION CONFIGURATION ---
 // PCM5122 software analog attenuation is limited to 0dB or -6dB.
 // Uncomment the desired setting for A/B testing:
-// #define BOARD_ANALOG_ATTENUATION PCM5122_ATTEN_0DB // 2Vrms (No attenuation)
-#define BOARD_ANALOG_ATTENUATION PCM5122_ATTEN_6DB  // 1Vrms (-6dB
-// attenuation)
+extern pcm5122_analog_atten_t g_analog_attenuation;
+
+// --- DIGITAL ATTENUATION CONFIGURATION ---
+// Baseline attenuation added to the logarithmic volume mapping.
+// Set to PCM5122_DIGITAL_ATTEN_0DB to start testing.
+extern int g_digital_attenuation;
 
 #define AUDIO_ADC_INPUT_CH_FORMAT "N"
 
