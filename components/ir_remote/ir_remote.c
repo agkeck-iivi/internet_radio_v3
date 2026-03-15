@@ -122,7 +122,6 @@ static const rmt_symbol_word_t bose_on_off_signal[] = {
 
 static rmt_channel_handle_t g_tx_channel = NULL;
 static ir_protocol_t g_current_protocol = IR_PROTOCOL_NONE;
-static bool g_ir_is_enabled = false;
 
 esp_err_t ir_remote_init(gpio_num_t tx_gpio_num, ir_protocol_t protocol)
 {
@@ -165,7 +164,6 @@ esp_err_t ir_remote_init(gpio_num_t tx_gpio_num, ir_protocol_t protocol)
     }
 
     g_current_protocol = protocol;
-    g_ir_is_enabled = g_runtime_config.ir_is_enabled;
 
     return ESP_OK;
 }
@@ -179,7 +177,6 @@ esp_err_t ir_remote_deinit(void)
     rmt_disable(g_tx_channel);
     esp_err_t ret = rmt_del_channel(g_tx_channel);
     g_tx_channel = NULL;
-    g_ir_is_enabled = false;
     
     return ret;
 }
@@ -258,14 +255,12 @@ esp_err_t ir_remote_toggle_audio(void)
 
 esp_err_t ir_remote_enable(void)
 {
-    g_ir_is_enabled = true;
     g_runtime_config.ir_is_enabled = true;
     return ESP_OK;
 }
 
 esp_err_t ir_remote_disable(void)
 {
-    g_ir_is_enabled = false;
     g_runtime_config.ir_is_enabled = false;
     return ESP_OK;
 }
