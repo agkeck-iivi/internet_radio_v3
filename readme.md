@@ -166,6 +166,8 @@ We provide a web interface to update the station data at <ESP32_IP_ADDRESS>/api/
 
 The radio implements a multi-stage power-saving strategy to minimize energy consumption when idle. 
 
+*Note: In local tests setting the router's default dns server to 8.8.8.8  (google dns) or 1.1.1.1 (cloudflare dns) results in faster wakeup times.*
+
 ### Power Requirements Table
 
 The following table outlines the current draw and estimated annual energy costs for each operational state. Estimates assume 24/7 operation in the specified state and an electricity cost of **$0.15 per kWh**.
