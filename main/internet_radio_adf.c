@@ -30,8 +30,8 @@
 #include "nvs_flash.h"
 #include "screens.h"
 // #include "sdkconfig.h"
-#include "internet_radio_adf.h"
 #include "app_config.h"
+#include "internet_radio_adf.h"
 #include "station_data.h"
 #include "web_server.h"
 #include "wifi_provisioning/manager.h"
@@ -77,7 +77,8 @@ static int g_history_index = 0;
 audio_board_handle_t board_handle = NULL;
 audio_event_iface_handle_t evt = NULL;
 esp_periph_set_handle_t periph_set = NULL;
-// g_ir_tx_channel is no longer needed globally as it's managed by the ir_remote component
+// g_ir_tx_channel is no longer needed globally as it's managed by the ir_remote
+// component
 
 volatile int g_bitrate_kbps = 0;
 // system monitor logging enable
@@ -129,7 +130,8 @@ static void save_wifi_state_to_nvs(void) {
   nvs_set_u8(nvs_handle, "wifi_chan", g_wifi_resume_state.channel);
   nvs_set_i32(nvs_handle, "wifi_ip", g_wifi_resume_state.ip_info.ip.addr);
   nvs_set_i32(nvs_handle, "wifi_gw", g_wifi_resume_state.ip_info.gw.addr);
-  nvs_set_i32(nvs_handle, "wifi_mask", g_wifi_resume_state.ip_info.netmask.addr);
+  nvs_set_i32(nvs_handle, "wifi_mask",
+              g_wifi_resume_state.ip_info.netmask.addr);
   nvs_set_i32(nvs_handle, "wifi_dns",
               g_wifi_resume_state.dns_info.ip.u_addr.ip4.addr);
   nvs_commit(nvs_handle);
@@ -150,9 +152,12 @@ static void load_wifi_state_from_nvs(void) {
     return;
   }
   nvs_get_u8(nvs_handle, "wifi_chan", &g_wifi_resume_state.channel);
-  nvs_get_i32(nvs_handle, "wifi_ip", (int32_t *)&g_wifi_resume_state.ip_info.ip.addr);
-  nvs_get_i32(nvs_handle, "wifi_gw", (int32_t *)&g_wifi_resume_state.ip_info.gw.addr);
-  nvs_get_i32(nvs_handle, "wifi_mask", (int32_t *)&g_wifi_resume_state.ip_info.netmask.addr);
+  nvs_get_i32(nvs_handle, "wifi_ip",
+              (int32_t *)&g_wifi_resume_state.ip_info.ip.addr);
+  nvs_get_i32(nvs_handle, "wifi_gw",
+              (int32_t *)&g_wifi_resume_state.ip_info.gw.addr);
+  nvs_get_i32(nvs_handle, "wifi_mask",
+              (int32_t *)&g_wifi_resume_state.ip_info.netmask.addr);
   nvs_get_i32(nvs_handle, "wifi_dns",
               (int32_t *)&g_wifi_resume_state.dns_info.ip.u_addr.ip4.addr);
   g_wifi_resume_state.dns_info.ip.type = ESP_IPADDR_TYPE_V4;
@@ -325,8 +330,9 @@ static void event_handler(void *arg, esp_event_base_t event_base,
 
     // Fallback logic for Cached DHCP state failure
     if (g_wifi_resume_state.has_state) {
-      ESP_LOGW(TAG, "Fast connect failed or connection dropped. Falling back to "
-                    "full DHCP...");
+      ESP_LOGW(TAG,
+               "Fast connect failed or connection dropped. Falling back to "
+               "full DHCP...");
       g_wifi_resume_state.has_state = false; // Disable resume for next try
 
       esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
@@ -549,7 +555,8 @@ void set_wifi_sleep_mode(bool sleeping) {
       if (netif) {
         esp_netif_dhcpc_stop(netif);
         esp_netif_set_ip_info(netif, &g_wifi_resume_state.ip_info);
-        ESP_LOGI(TAG, "Restoring DNS: " IPSTR, IP2STR(&g_wifi_resume_state.dns_info.ip.u_addr.ip4));
+        ESP_LOGI(TAG, "Restoring DNS: " IPSTR,
+                 IP2STR(&g_wifi_resume_state.dns_info.ip.u_addr.ip4));
         esp_netif_set_dns_info(netif, ESP_NETIF_DNS_MAIN,
                                &g_wifi_resume_state.dns_info);
       }
@@ -730,10 +737,11 @@ void app_main(void) {
   ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
 
   // If waking from deep sleep, we want to try Fast Connect immediately
-  if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0 || wakeup_reason == ESP_SLEEP_WAKEUP_TIMER) {
-     if (g_wifi_resume_state.has_state) {
-        ESP_LOGI(TAG, "Deep sleep wakeup: Cached WiFi state found.");
-     }
+  if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0 ||
+      wakeup_reason == ESP_SLEEP_WAKEUP_TIMER) {
+    if (g_wifi_resume_state.has_state) {
+      ESP_LOGI(TAG, "Deep sleep wakeup: Cached WiFi state found.");
+    }
   }
 
   // Check for forced provisioning (Volume button held during boot)
@@ -763,7 +771,7 @@ void app_main(void) {
     wifi_prov_scheme_ble_set_service_uuid(custom_service_uuid);
     ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_1, NULL,
                                                      service_name, NULL));
-  ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi");
+    ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi");
   }
 
   // Start Wi-Fi (non-blocking scan/associate)
@@ -842,27 +850,28 @@ void app_main(void) {
         msg.source == (void *)audio_pipeline_components.http_stream_reader &&
         msg.cmd == AEL_MSG_CMD_REPORT_STATUS &&
         (int)msg.data == AEL_STATUS_ERROR_OPEN) {
-      
+
       static int open_error_count = 0;
       open_error_count++;
       ESP_LOGW(TAG, "[ * ] Restart stream (attempt %d)", open_error_count);
 
       if (open_error_count >= 3 && g_wifi_resume_state.has_state) {
-        ESP_LOGE(TAG, "Repeated open errors. Stale WiFi resume state suspected. Clearing cache and falling back...");
+        ESP_LOGE(TAG, "Repeated open errors. Stale WiFi resume state "
+                      "suspected. Clearing cache and falling back...");
         g_wifi_resume_state.has_state = false;
-        
+
         esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
         if (netif) {
           esp_netif_dhcpc_start(netif);
         }
-        
+
         wifi_config_t sta_cfg;
         esp_wifi_get_config(WIFI_IF_STA, &sta_cfg);
         sta_cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
         sta_cfg.sta.bssid_set = false;
         sta_cfg.sta.channel = 0;
         esp_wifi_set_config(WIFI_IF_STA, &sta_cfg);
-        
+
         esp_wifi_connect();
         open_error_count = 0; // Reset after fallback trigger
       }
