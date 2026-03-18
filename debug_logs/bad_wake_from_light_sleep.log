@@ -1,0 +1,73 @@
+I (58575) AUDIO_PIPELINE_MGR: Entering light sleep...
+I (58575) ir_remote: Transmitting BOSE Audio OFF (ON/OFF toggle) signal...
+I (58775) AUDIO_PIPELINE_MGR: Target wakeup reached (Cause: 7)
+I (58775) ir_remote: Transmitting BOSE Audio ON (AUX) signal...
+I (58775) wifi:bcn_timeout,ap_probe_send_start
+I (58795) encoders: Ghost station pulse ignored (lockout): 0 -> 1
+I (58855) encoders: Ghost volume pulse ignored (lockout): 15 -> 20
+I (58865) AUDIO_PIPELINE_MGR: Woke up from light sleep
+I (58865) encoders: Woke from light sleep after 44632794 us. Cause: 7 (1=EXT0, 2=EXT1, 4=TIMER, 7=GPIO)
+I (58875) encoders: Light sleep interrupted (duration glitch or button press). Resuming...
+I (58885) encoders: Resuming from light sleep...
+I (58885) init_lvgl_ssd1306: Re-initializing SSD1306 panel after wakeup
+I (59115) INTERNET_RADIO: Waiting for Wi-Fi connection...
+I (59115) INTERNET_RADIO: Wi-Fi Connected.
+I (59115) AUDIO_PIPELINE_MGR: Recreating audio pipeline after wakeup
+I (59115) AUDIO_PIPELINE_MGR: Creating audio pipeline for codec type: AAC with URI: https://kexp.streamguys1.com/kexp160.aac
+I (59125) AUDIO_PIPELINE: link el->rb, el:0x3c21ecb0, tag:http, rb:0x3c213d14
+I (59135) AUDIO_PIPELINE: link el->rb, el:0x3c213bfc, tag:codec, rb:0x3c218d5c
+I (59135) AUDIO_PIPELINE_MGR: Audio pipeline with AAC codec created successfully
+I (59145) INTERNET_RADIO: Throughput history reset
+I (59155) AUDIO_THREAD: The http task allocate stack on external memory
+I (59155) AUDIO_ELEMENT: [http-0x3c21ecb0] Element task created
+I (59165) AUDIO_THREAD: The codec task allocate stack on external memory
+I (59165) AUDIO_ELEMENT: [codec-0x3c213bfc] Element task created
+I (59175) AUDIO_THREAD: The i2s task allocate stack on internal memory
+I (59185) AUDIO_ELEMENT: [i2s-0x3c21ef28] Element task created
+I (59185) AUDIO_PIPELINE: Func:audio_pipeline_run, Line:359, MEM Total:8377940 Bytes, Inter:63547 Bytes, Dram:63547 Bytes, Dram largest free:23552Bytes
+
+I (59205) AUDIO_ELEMENT: [http] AEL_MSG_CMD_RESUME,state:1
+I (59205) AUDIO_ELEMENT: [codec] AEL_MSG_CMD_RESUME,state:1
+I (59215) AUDIO_ELEMENT: [i2s] AEL_MSG_CMD_RESUME,state:1
+I (59215) AUDIO_PIPELINE: Pipeline started
+I (59215) INTERNET_RADIO: Watchdog counter reset
+I (59225) PCM5122_DRIVER: Setting hardware mute: OFF
+I (59235) encoders: Hardware unmuted after wakeup
+I (61285) wifi:ap_probe_send over, reset wifi status to disassoc
+I (61285) wifi:state: run -> init (0xc800)
+I (61295) wifi:pm stop, total sleep time: 31314870 us / 103745777 us
+
+I (61295) wifi:<ba-del>idx:1, tid:0
+I (61295) wifi:<ba-del>idx:0, tid:5
+I (61295) wifi:new:<10,0>, old:<10,0>, ap:<255,255>, sta:<10,0>, prof:1, snd_ch_cfg:0x0
+I (61305) INTERNET_RADIO: Disconnected. Reason: 200. Connecting to the AP again...
+E (61305) esp-tls: [sock=57] delayed connect error: Software caused connection abort
+E (61315) esp-tls: Failed to open new connection
+E (61315) transport_base: Failed to open a new connection
+E (61325) HTTP_CLIENT: Connection failed, sock < 0
+E (61325) HTTP_STREAM: Failed to open http stream
+E (61335) AUDIO_ELEMENT: [http] AEL_STATUS_ERROR_OPEN,-1
+W (61335) AUDIO_ELEMENT: [http] audio_element_on_cmd_error,7
+W (61345) AUDIO_ELEMENT: IN-[codec] AEL_IO_ABORT
+E (61345) AAC_DECODER: Empty aac file
+W (61355) AUDIO_ELEMENT: [codec] AEL_IO_ABORT, -3
+I (61355) AUDIO_PIPELINE_MGR: Codec event callback triggered for element: codec, command: 11
+I (61365) AAC_DECODER: Closed by [2]
+I (61365) AUDIO_PIPELINE_MGR: Codec event callback triggered for element: codec, command: 8
+W (61375) AUDIO_ELEMENT: IN-[i2s] AEL_IO_ABORT
+I (63715) INTERNET_RADIO: Disconnected. Reason: 201. Connecting to the AP again...
+I (63725) wifi:new:<10,0>, old:<10,0>, ap:<255,255>, sta:<10,0>, prof:1, snd_ch_cfg:0x0
+I (63725) wifi:state: init -> auth (0xb0)
+I (63735) wifi:state: auth -> assoc (0x0)
+I (63735) wifi:state: assoc -> run (0x10)
+I (63755) wifi:connected with headquarters, aid = 34, channel 10, BW20, bssid = 6a:95:75:42:ca:9c
+I (63755) wifi:security: WPA2-PSK, phy: bgn, rssi: -54
+I (63755) wifi:pm start, type: 1
+
+I (63755) wifi:set rx beacon pti, rx_bcn_pti: 14, bcn_timeout: 25000, mt_pti: 14, mt_time: 10000
+I (63775) wifi:<ba-add>idx:0 (ifx:0, 6a:95:75:42:ca:9c), tid:5, ssn:2, winSize:64
+I (63785) wifi:AP's beacon interval = 102400 us, DTIM period = 1
+I (64785) INTERNET_RADIO: Got IP: 192.168.0.104
+I (64785) INTERNET_RADIO: Got IP: 192.168.0.104
+I (64785) esp_netif_handlers: sta ip: 192.168.0.104, mask: 255.255.255.0, gw: 192.168.0.1
+E (88915) INTERNET_RADIO: Watchdog triggered: 0 kbps for 30 consecutive seconds. Restarting...

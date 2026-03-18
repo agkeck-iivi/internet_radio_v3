@@ -272,11 +272,16 @@ static void volume_press_task(void *pvParameters) {
       int64_t now = esp_timer_get_time();
       if (now - mute_start_time >
           (int64_t)g_runtime_config.light_sleep_delay_ms * 1000) {
+        // Log light sleep entry
         ESP_LOGI(TAG, "Muted for >%" PRIu32 " ms. Entering light sleep...",
                  g_runtime_config.light_sleep_delay_ms);
 
-        // Disconnect WiFi before sleep to bypass bcn_timeout on wakeup
-        set_wifi_sleep_mode(true);
+        // Ensure button is released before entering light sleep to avoid
+        // immediate wakeup
+        while (gpio_get_level(VOLUME_PRESS_GPIO) == 0) {
+          ESP_LOGI(TAG, "Waiting for button release before light sleep...");
+          vTaskDelay(pdMS_TO_TICKS(50));
+        }
 
         // Enter sleep (logic inside audio_pipeline_manager.c)
         // Pass timer wakeup duration ONLY if Light+Deep mode is active
@@ -355,20 +360,17 @@ static void volume_press_task(void *pvParameters) {
                         "press). Resuming...");
         }
 
-        // If we reach here, it was a GPIO wakeup (or other)
+        // Handle wakeup
         ESP_LOGI(TAG, "Resuming from light sleep...");
-
-        // Trigger reconnection immediately (non-blocking)
-        set_wifi_sleep_mode(false);
 
         // Wake up display immediately for user feedback
         lvgl_ssd1306_wakeup();
 
-        // Wait for wifi before restarting pipeline
-        wait_for_wifi_connection();
-
         // Brief delay to let network stack settle
         vTaskDelay(pdMS_TO_TICKS(100));
+
+        // Wait for wifi before restarting pipeline
+        wait_for_wifi_connection();
 
         // Restart pipeline
         extern audio_event_iface_handle_t evt;

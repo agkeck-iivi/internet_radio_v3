@@ -305,10 +305,33 @@ esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
 #ifdef CONFIG_IR_REMOTE_ENABLED
   if (g_runtime_config.ir_is_enabled) {
     ir_remote_turn_audio_off();
+    // Brief delay to let IR hardware settle and avoid spurious wakeups
+    vTaskDelay(pdMS_TO_TICKS(100));
   }
 #endif
 
-  esp_light_sleep_start();
+  // Loop to handle "transient" wakeups like Wi-Fi or BT.
+  // We only want to fully exit this function if the wakeup was intentional.
+  while (1) {
+    if (gpio_get_level(wakeup_gpio) == 0) {
+      ESP_LOGW(TAG, "Wakeup GPIO %d is already LOW. Skipping sleep.",
+               wakeup_gpio);
+      break;
+    }
+
+    esp_light_sleep_start();
+
+    esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
+    if (cause == ESP_SLEEP_WAKEUP_GPIO || cause == ESP_SLEEP_WAKEUP_TIMER ||
+        cause == ESP_SLEEP_WAKEUP_EXT0 || cause == ESP_SLEEP_WAKEUP_EXT1) {
+      ESP_LOGI(TAG, "Target wakeup reached (Cause: %d)", cause);
+      break;
+    }
+
+    // If we woke up for another reason (like Wi-Fi Cause 11), the IDF has
+    // already handled the interrupt. We can just log it and go back to sleep.
+    ESP_LOGD(TAG, "Transient wakeup (Cause: %d), returning to sleep...", cause);
+  }
 
 #ifdef CONFIG_IR_REMOTE_ENABLED
   if (g_runtime_config.ir_is_enabled) {
