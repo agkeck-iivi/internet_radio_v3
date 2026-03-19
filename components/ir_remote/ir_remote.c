@@ -2,6 +2,8 @@
 #include "app_config.h"
 #include "esp_log.h"
 #include "driver/rmt_tx.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include <string.h>
 
 #define IR_RESOLUTION_HZ 1000000 // 1MHz resolution, 1 tick = 1us
@@ -234,7 +236,12 @@ esp_err_t ir_remote_turn_audio_on(void)
 esp_err_t ir_remote_turn_audio_off(void)
 {
     if (g_current_protocol == IR_PROTOCOL_BOSE) {
-        ESP_LOGI(TAG, "Transmitting BOSE Audio OFF (ON/OFF toggle) signal...");
+        ESP_LOGI(TAG, "Transmitting BOSE Audio OFF sequence (AUX -> 100ms -> TOGGLE)...");
+        esp_err_t ret = send_signal(bose_aux_signal, sizeof(bose_aux_signal));
+        if (ret != ESP_OK) {
+            return ret;
+        }
+        vTaskDelay(pdMS_TO_TICKS(100));
         return send_signal(bose_on_off_signal, sizeof(bose_on_off_signal));
     }
     

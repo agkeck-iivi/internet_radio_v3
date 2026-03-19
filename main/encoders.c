@@ -243,11 +243,9 @@ static void volume_press_task(void *pvParameters) {
           vTaskDelay(pdMS_TO_TICKS(10));
         }
 
-#ifdef CONFIG_IR_REMOTE_ENABLED
         if (g_runtime_config.ir_is_enabled) {
           ir_remote_toggle_audio();
         }
-#endif
       } else {
         // Timeout reached, no second click -> Single Click Action (Mute Toggle)
         is_muted = !is_muted; // Toggle mute state

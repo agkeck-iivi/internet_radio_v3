@@ -302,19 +302,15 @@ esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
   // 8. Enter low-power state
   esp_task_wdt_deinit();
 
-#ifdef CONFIG_IR_REMOTE_ENABLED
   if (g_runtime_config.ir_is_enabled) {
     ir_remote_turn_audio_off();
   }
-#endif
 
   esp_light_sleep_start();
 
-#ifdef CONFIG_IR_REMOTE_ENABLED
   if (g_runtime_config.ir_is_enabled) {
     ir_remote_turn_audio_on();
   }
-#endif
 
   esp_task_wdt_config_t twdt_config = {
       .timeout_ms = CONFIG_ESP_TASK_WDT_TIMEOUT_S * 1000,

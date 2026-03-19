@@ -796,14 +796,13 @@ void app_main(void) {
   audio_event_iface_set_listener(esp_periph_set_get_event_iface(periph_set),
                                  evt);
 
-#ifdef CONFIG_IR_REMOTE_ENABLED
+  ESP_LOGI(TAG, "Initializing IR Remote Component");
+  ir_remote_init((gpio_num_t)IR_TX_GPIO_NUM, IR_PROTOCOL_BOSE);
+
   if (g_runtime_config.ir_is_enabled) {
-    ESP_LOGI(TAG, "Initializing IR Remote Component");
-    ir_remote_init((gpio_num_t)IR_TX_GPIO_NUM, IR_PROTOCOL_BOSE);
     ESP_LOGI(TAG, "Sending Audio ON signal");
     ir_remote_turn_audio_on();
   }
-#endif
 
   ESP_LOGI(TAG, "Waiting for Wi-Fi connection...");
   xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, false, true,
