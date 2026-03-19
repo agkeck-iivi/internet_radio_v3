@@ -221,8 +221,9 @@ void change_station(int new_station_index) {
   reset_throughput_history();
   ret = audio_pipeline_run(audio_pipeline_components.pipeline);
 
-  // Restore mute state after pipeline is started
+  // Restore mute state after a short delay to allow audio to stabilize
   if (board_handle && board_handle->audio_hal) {
+    vTaskDelay(pdMS_TO_TICKS(500));
     audio_hal_set_mute(board_handle->audio_hal, get_mute_state());
   }
 
@@ -817,10 +818,15 @@ void app_main(void) {
   if (err == ESP_OK) {
     reset_throughput_history();
     audio_pipeline_run(audio_pipeline_components.pipeline);
+
     if (evt) {
       audio_pipeline_set_listener(audio_pipeline_components.pipeline, evt);
     }
     g_is_pipeline_running = true;
+
+    // SILENT BOOT: Delay unmute until audio is flowing down the pipeline
+    vTaskDelay(pdMS_TO_TICKS(500)); 
+    audio_hal_set_mute(board_handle->audio_hal, false);
   }
 
   start_web_server();
