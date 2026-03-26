@@ -1,11 +1,11 @@
 #include "pcm5122_driver.h"
+#include "app_config.h"
 #include "audio_volume.h"
 #include "board.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "i2c_bus.h"
-#include "app_config.h"
 #include <math.h>
 #include <string.h>
 
@@ -24,6 +24,12 @@ static codec_dac_volume_config_t *dac_vol_handle;
       .reg_value = 0,                                                          \
       .user_volume = 0,                                                        \
       .offset_conv_volume = NULL,                                              \
+  }
+
+#define PCM_ASSERT(a, format, b, ...)                                          \
+  if ((a) != 0) {                                                              \
+    ESP_LOGE(PCM_TAG, format, ##__VA_ARGS__);                                  \
+    return b;                                                                  \
   }
 
 audio_hal_func_t MY_AUDIO_CODEC_PCM5122_DEFAULT_HANDLE = {
@@ -61,10 +67,7 @@ static int i2c_init() {
                               .scl_pullup_en = GPIO_PULLUP_ENABLE,
                               .master.clk_speed = 100000};
   res = get_i2c_pins(I2C_NUM_0, &pcm_i2c_cfg);
-  if (res != 0) {
-    ESP_LOGE(PCM_TAG, "getting i2c pins error");
-    return -1;
-  }
+  PCM_ASSERT(res, "getting i2c pins error", -1);
   i2c_handle = i2c_bus_create(I2C_NUM_0, &pcm_i2c_cfg);
   return res;
 }
@@ -76,57 +79,88 @@ esp_err_t pcm5122_init(audio_hal_codec_config_t *cfg) {
   if (res != ESP_OK)
     return res;
 
-  // MINIMAL SILENT BOOT FIX: Hardware-mute as the very 1st command
-  res |= pcm5122_write_reg(PCM5122_MUTE, 0x11);
-
+  // Robust Initialization Sequence inspired by Adafruit library
   ESP_LOGI(PCM_TAG, "Performing robust initialization...");
 
   res |= pcm5122_write_reg(PCM5122_PAGE, 0x00);    // Page 0
   res |= pcm5122_write_reg(PCM5122_STANDBY, 0x10); // Enter Standby (RQST bit)
 
-  vTaskDelay(pdMS_TO_TICKS(10));
-  res |= pcm5122_write_reg(PCM5122_RESET, 0x01); // Reset
-  vTaskDelay(pdMS_TO_TICKS(10));
+  // Reset Registers
+  res |= pcm5122_write_reg(PCM5122_RESET, 0x01);
+  uint8_t reset_state = 1;
+  for (int i = 0; i < 10 && reset_state != 0; i++) {
+    vTaskDelay(pdMS_TO_TICKS(10));
+    pcm_read_reg(PCM5122_RESET, &reset_state);
+    reset_state &= 0x01;
+  }
 
   // Reset Modules
   res |= pcm5122_write_reg(PCM5122_RESET, 0x10);
-  uint8_t reset_state = 0x10;
+  reset_state = 0x10;
   for (int i = 0; i < 10 && reset_state != 0; i++) {
     vTaskDelay(pdMS_TO_TICKS(10));
     pcm_read_reg(PCM5122_RESET, &reset_state);
     reset_state &= 0x10;
   }
 
-  // Ensure hardware mute is set BEFORE exiting standby
-  res |= pcm5122_write_reg(PCM5122_MUTE, 0x11);
+  // Configure Analog Gain (Attenuation) WHILE IN STANDBY
+  // PCM5122 manual software analog gain is only 0dB or -6dB
+  // Control is on Page 1, Register 2: Bit 4 (LAGN), Bit 0 (RAGN)
+  // 0 = 0dB (2Vrms), 1 = -6dB (1Vrms)
+  res |= pcm5122_write_reg(PCM5122_PAGE, 0x01); // Switch to Page 1
+  uint8_t atten_val =
+      (g_runtime_config.analog_attenuation == PCM5122_ANALOG_ATTEN_6DB) ? 0x11
+                                                                        : 0x00;
+  res |= pcm5122_write_reg(0x02, atten_val);
+
+  // Verification read-back
+  uint8_t read_back = 0;
+  pcm_read_reg(0x02, &read_back);
+  ESP_LOGI(PCM_TAG,
+           "Analog gain register (P1, R2) set to 0x%02X (Readback: 0x%02X)",
+           atten_val, read_back);
+
+  res |= pcm5122_write_reg(PCM5122_PAGE, 0x00); // Switch back to Page 0
+
   // Exit Standby and Powerdown
   res |= pcm5122_write_reg(PCM5122_STANDBY, 0x00);
 
-  // Configure clock inference and error ignore (System default)
+  // Configure clock inference and error ignore
+  // Reg 37 (0x25): Ignore FS, BCK, SCK, PLL, Clock Halt errors
   res |= pcm5122_write_reg(PCM5122_ERROR_DETECT, 0x7D);
 
-  // Manual Clock Config: REQUIRED because I2S_MCK_GPIO is not used on this board
-  res |= pcm5122_write_reg(PCM5122_PLL_EN, 0x01);      // Enable PLL
-  res |= pcm5122_write_reg(PCM5122_PLL_REF, 0x10);     // PLL Ref = BCK (0x10)
-  res |= pcm5122_write_reg(PCM5122_DAC_CLK_SRC, 0x10); // DAC Src = PLL (0x10)
+  // Explicitly enable PLL and set BCK as reference
+  res |= pcm5122_write_reg(PCM5122_PLL_EN, 0x01); // Enable PLL
+  res |=
+      pcm5122_write_reg(PCM5122_PLL_REF, PCM5122_PLL_REF_BCK); // PLL Ref = BCK
+  res |= pcm5122_write_reg(PCM5122_DAC_CLK_SRC,
+                           PCM5122_DAC_CLK_PLL); // DAC Src = PLL
 
   // Configure I2S based on cfg
   res |= pcm5122_config_i2s(cfg->codec_mode, &cfg->i2s_iface);
 
   // Ensure volume linkage is disabled
+  // Reg 60 (0x3C): Bits 1:0 = 00 (Independent)
   res |= pcm5122_write_reg(PCM5122_DIGITAL_VOL_CTRL, 0x00);
 
   // Disable Auto Mute
   res |= pcm5122_write_reg(PCM5122_AUTO_MUTE, 0x00);
 
-  // Set default volume
+  // Set default volume and initial unmute
   codec_dac_volume_config_t vol_cfg = PCM5122_DAC_VOL_CFG_DEFAULT();
   dac_vol_handle = audio_codec_volume_init(&vol_cfg);
+  // Set ramp rates: Fast Down (4dB/step at 1fs), Smooth Up (0.5dB/step at 8fs)
+  uint8_t ramp_cfg =
+      PCM5122_RAMP_UP_CONFIG(PCM5122_RAMP_FREQ_8FS, PCM5122_RAMP_STEP_0_5DB) |
+      PCM5122_RAMP_DN_CONFIG(PCM5122_RAMP_FREQ_1FS, PCM5122_RAMP_STEP_4DB);
+  pcm5122_set_ramp_rate(ramp_cfg);
+
+  pcm5122_set_mute(false);
 
   if (res != ESP_OK) {
     ESP_LOGE(PCM_TAG, "PCM5122 init failed");
   } else {
-    ESP_LOGI(PCM_TAG, "PCM5122 init complete (MINIMAL SILENT BOOT)");
+    ESP_LOGI(PCM_TAG, "PCM5122 init complete (v3.8 - Standby-phase Analog)");
   }
   return res == 0 ? ESP_OK : ESP_FAIL;
 }
@@ -148,12 +182,13 @@ esp_err_t pcm5122_ctrl_state(audio_hal_codec_mode_t mode,
   }
 
   if (ctrl_state == AUDIO_HAL_CTRL_STOP) {
-    return pcm5122_set_mute(true);
+    // Soft mute
+    pcm5122_set_mute(true);
   } else {
-    // SILENT START: Keep it muted on start; app_main will unmute later
-    ESP_LOGI(PCM_TAG, "PCM5122 START: Keeping muted for app-controlled transition");
-    return ESP_OK;
+    // Unmute
+    pcm5122_set_mute(false);
   }
+  return ESP_OK;
 }
 
 esp_err_t pcm5122_config_i2s(audio_hal_codec_mode_t mode,
@@ -257,7 +292,8 @@ esp_err_t pcm5122_set_mute(bool enable) {
 esp_err_t pcm5122_apply_analog_attenuation(void) {
   esp_err_t res = pcm5122_write_reg(PCM5122_PAGE, 0x01); // Switch to Page 1
   uint8_t atten_val =
-      (g_runtime_config.analog_attenuation == PCM5122_ANALOG_ATTEN_6DB) ? 0x11 : 0x00;
+      (g_runtime_config.analog_attenuation == PCM5122_ANALOG_ATTEN_6DB) ? 0x11
+                                                                        : 0x00;
   res |= pcm5122_write_reg(0x02, atten_val);
   res |= pcm5122_write_reg(PCM5122_PAGE, 0x00); // Switch back to Page 0
   ESP_LOGI(PCM_TAG, "Analog attenuation applied: %s",
@@ -273,6 +309,18 @@ esp_err_t pcm5122_get_mute(bool *mute) {
     // PCM5122_MUTE (Reg 3): Bit 4 is for Right, Bit 0 for Left
     // 1: Mute, 0: Unmute
     *mute = (data & 0x11) != 0;
+  }
+  return res;
+}
+
+esp_err_t pcm5122_set_ramp_rate(uint8_t config_val) {
+  ESP_LOGI(PCM_TAG, "Setting digital volume ramp rate: 0x%02X", config_val);
+  esp_err_t res = pcm5122_write_reg(PCM5122_PAGE, 0x00);
+  if (res != ESP_OK)
+    return res;
+  res = pcm5122_write_reg(PCM5122_DIGITAL_VOL_RAMP, config_val);
+  if (res != ESP_OK) {
+    ESP_LOGE(PCM_TAG, "Failed to set ramp rate: %s", esp_err_to_name(res));
   }
   return res;
 }
