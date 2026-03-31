@@ -3027,6 +3027,17 @@
 		)
 		(uuid "7fdcc0dc-68f1-436a-8c8e-7b4534803d41")
 	)
+	(text "Pullup ensures we boot into flash code when\npowered from extern 5V instead of usb "
+		(exclude_from_sim no)
+		(at 180.848 74.422 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "abd9e5f4-1784-46a2-9778-d4350f555f9b")
+	)
 	(text "BOSE IR remote input\nNote: this might not be necessary with\nboot sequence sending AUX and double\nclick on volume sending on/of"
 		(exclude_from_sim no)
 		(at 13.97 135.636 0)
@@ -3736,6 +3747,16 @@
 	)
 	(wire
 		(pts
+			(xy 175.26 91.44) (xy 175.26 80.01)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "94f53f3d-9f43-4ca8-8772-8a9aa8e4c081")
+	)
+	(wire
+		(pts
 			(xy 104.14 24.13) (xy 104.14 26.67)
 		)
 		(stroke
@@ -4116,7 +4137,7 @@
 	)
 	(wire
 		(pts
-			(xy 157.48 99.06) (xy 167.64 99.06)
+			(xy 157.48 99.06) (xy 175.26 99.06)
 		)
 		(stroke
 			(width 0)
@@ -4944,7 +4965,7 @@
 			(uuid "f12ac7ec-96ce-4df0-8ab3-04237ff3e391")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "ES8388module")
 					(unit 1)
@@ -5010,7 +5031,7 @@
 			(uuid "0c0ca5f6-a60a-47b9-ae21-c92eb6f29038")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR04")
 					(unit 1)
@@ -5076,7 +5097,7 @@
 			(uuid "832fc513-937a-43fd-b9c2-dbdcb067a64e")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR01")
 					(unit 1)
@@ -5219,7 +5240,7 @@
 			(uuid "12d2e8dc-411c-46cf-91e6-4e8844baf9bf")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "R5")
 					(unit 1)
@@ -5355,7 +5376,7 @@
 			(uuid "21699e42-7d87-4630-8a71-1cbd4b0919c6")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "SW1")
 					(unit 1)
@@ -5557,7 +5578,7 @@
 			(uuid "14be6e70-3853-4fcd-809a-3c1a89726bb6")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR06")
 					(unit 1)
@@ -5890,7 +5911,7 @@
 			(uuid "3d188ad7-8ef7-495d-9177-794cd6151052")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR027")
 					(unit 1)
@@ -5956,7 +5977,7 @@
 			(uuid "3d188ad7-8ef7-495d-9177-794cd6151053")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR017")
 					(unit 1)
@@ -6022,7 +6043,7 @@
 			(uuid "14be6e70-3853-4fcd-809a-3c1a89726bb7")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR07")
 					(unit 1)
@@ -6228,7 +6249,7 @@
 			(uuid "854624f2-fcd7-46cc-989a-90a4ab10c834")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "R10")
 					(unit 1)
@@ -6298,7 +6319,7 @@
 			(uuid "6fa0643f-83fb-41d1-81ac-029de102f7c2")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "C1")
 					(unit 1)
@@ -6364,7 +6385,7 @@
 			(uuid "e8761974-d614-4d95-906e-d2587224ee89")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR026")
 					(unit 1)
@@ -6430,7 +6451,7 @@
 			(uuid "0c0ca5f6-a60a-47b9-ae21-c92eb6f29039")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR05")
 					(unit 1)
@@ -6564,7 +6585,7 @@
 			(uuid "1b19e82e-bf86-43d5-9243-b947be2e2b47")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR014")
 					(unit 1)
@@ -6630,7 +6651,7 @@
 			(uuid "19712639-7a64-47eb-9594-fe8f4b71cdac")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR015")
 					(unit 1)
@@ -6763,7 +6784,7 @@
 			(uuid "0c0ca5f6-a60a-47b9-ae21-c92eb6f2903a")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR03")
 					(unit 1)
@@ -6897,7 +6918,7 @@
 			(uuid "3d188ad7-8ef7-495d-9177-794cd6151054")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR016")
 					(unit 1)
@@ -7042,7 +7063,7 @@
 			(uuid "1db935d5-a8f3-4751-8c71-1daec5dc6faa")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "D1")
 					(unit 1)
@@ -7108,7 +7129,7 @@
 			(uuid "161347e4-9bcd-49dc-ac30-5ca9b3dd0adc")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR09")
 					(unit 1)
@@ -7174,7 +7195,7 @@
 			(uuid "ef700d20-b173-43d5-827e-69c402fa4ec0")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR02")
 					(unit 1)
@@ -7369,7 +7390,7 @@
 			(uuid "73395c74-a3e4-4aba-b031-5cd900694fe8")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "U1")
 					(unit 1)
@@ -7435,7 +7456,7 @@
 			(uuid "19712639-7a64-47eb-9594-fe8f4b71cdad")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR013")
 					(unit 1)
@@ -7520,7 +7541,7 @@
 			(uuid "309c4a4c-6aca-4bc3-9a33-f818677a342f")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "oled128x64")
 					(unit 1)
@@ -7586,7 +7607,7 @@
 			(uuid "ceb95796-dbe6-4285-bad9-7d5275ceec11")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR010")
 					(unit 1)
@@ -7652,7 +7673,7 @@
 			(uuid "3d188ad7-8ef7-495d-9177-794cd6151055")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR028")
 					(unit 1)
@@ -7662,7 +7683,7 @@
 	)
 	(symbol
 		(lib_id "Device:R")
-		(at 167.64 95.25 0)
+		(at 175.26 95.25 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -7671,7 +7692,7 @@
 		(fields_autoplaced yes)
 		(uuid "d796d830-16b9-4999-8c62-419f80baf2c3")
 		(property "Reference" "R7"
-			(at 170.18 93.9799 0)
+			(at 177.8 93.9799 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7680,7 +7701,7 @@
 			)
 		)
 		(property "Value" "10K"
-			(at 170.18 96.5199 0)
+			(at 177.8 96.5199 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7689,7 +7710,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 165.862 95.25 90)
+			(at 173.482 95.25 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7698,7 +7719,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 167.64 95.25 0)
+			(at 175.26 95.25 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7707,7 +7728,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 167.64 95.25 0)
+			(at 175.26 95.25 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7722,7 +7743,7 @@
 			(uuid "ebb5b56f-557e-4f4d-93c0-4db634dd58b5")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "R7")
 					(unit 1)
@@ -7789,7 +7810,7 @@
 			(uuid "f87a4e43-4209-4486-ac8a-d211ee89b99d")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR019")
 					(unit 1)
@@ -7799,7 +7820,7 @@
 	)
 	(symbol
 		(lib_id "power:+3.3V")
-		(at 167.64 91.44 0)
+		(at 175.26 80.01 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -7808,7 +7829,7 @@
 		(fields_autoplaced yes)
 		(uuid "dadd6f6c-5d92-4736-ba91-6f3cc97bbe61")
 		(property "Reference" "#PWR029"
-			(at 167.64 95.25 0)
+			(at 175.26 83.82 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7817,7 +7838,7 @@
 			)
 		)
 		(property "Value" "+3.3V"
-			(at 167.64 86.36 0)
+			(at 175.26 74.93 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7825,7 +7846,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 167.64 91.44 0)
+			(at 175.26 80.01 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7834,7 +7855,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 167.64 91.44 0)
+			(at 175.26 80.01 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7843,7 +7864,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+3.3V\""
-			(at 167.64 91.44 0)
+			(at 175.26 80.01 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7855,7 +7876,7 @@
 			(uuid "d937f5b3-77ab-47f9-8d95-59033cf9b2d1")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR029")
 					(unit 1)
@@ -7989,7 +8010,7 @@
 			(uuid "54c1604b-1b1c-4c9d-bc3a-bd9537343343")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "R2")
 					(unit 1)
@@ -8202,7 +8223,7 @@
 			(uuid "af320cc0-c8ee-4d06-8be4-87f27cddbefc")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "volume")
 					(unit 1)
@@ -8271,7 +8292,7 @@
 			(uuid "caaf98d0-ec07-42a3-907c-9a9551a29890")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "C3")
 					(unit 1)
@@ -8341,7 +8362,7 @@
 			(uuid "54c1604b-1b1c-4c9d-bc3a-bd9537343344")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "R1")
 					(unit 1)
@@ -8409,7 +8430,7 @@
 			(uuid "84108932-60d1-451e-8d98-e4f06ef403d7")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "bose_on_sw")
 					(unit 1)
@@ -8474,7 +8495,7 @@
 			(uuid "6634ab02-30a7-4beb-a227-cc4971736fd3")
 		)
 		(instances
-			(project ""
+			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
 					(reference "#PWR08")
 					(unit 1)
