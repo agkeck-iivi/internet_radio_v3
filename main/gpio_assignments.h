@@ -4,8 +4,8 @@
 // ==========================================
 // I2C BUS (Audio Codec)
 // ==========================================
-#define I2C_SDA_GPIO 10
-#define I2C_SCL_GPIO 9
+#define I2C_SDA_GPIO 39
+#define I2C_SCL_GPIO 38
 
 // ==========================================
 // I2S BUS (PCM5122 Audio Codec)
@@ -32,7 +32,7 @@
 #define VOLUME_ENCODER_B_GPIO 2
 #define VOLUME_ENCODER_PRESS_GPIO 1
 
-#define STATION_ENCODER_A_GPIO 39
+#define STATION_ENCODER_A_GPIO 45
 #define STATION_ENCODER_B_GPIO 40
 #define STATION_ENCODER_PRESS_GPIO 41
 
