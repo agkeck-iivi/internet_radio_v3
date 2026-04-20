@@ -14,7 +14,7 @@
 #define I2S_BCK_GPIO 20  // note that we can't use internal usb if we use this pin.
 #define I2S_DATA_OUT_GPIO 21 // Connects to DIN on PCM5122
 #define I2S_WS_LRCK_GPIO 47
-#define I2S_DATA_IN_GPIO 4 // Unused by DAC, but defined
+// #define I2S_DATA_IN_GPIO 4 // Unused by DAC, but defined
 
 // ==========================================
 // SPI BUS (SSD1306 Display)
