@@ -10,11 +10,12 @@
 // ==========================================
 // I2S BUS (PCM5122 Audio Codec)
 // ==========================================
-// #define I2S_MCK_GPIO              16  // Not used
-#define I2S_BCK_GPIO 20  // note that we can't use internal usb if we use this pin.
+// #define I2S_MCK_GPIO              16
+
+#define I2S_BCK_GPIO 20      // note that we can't use internal usb.
 #define I2S_DATA_OUT_GPIO 21 // Connects to DIN on PCM5122
 #define I2S_WS_LRCK_GPIO 47
-// #define I2S_DATA_IN_GPIO 4 // Unused by DAC, but defined
+#define I2S_DATA_IN_GPIO 4 // Unused by DAC, but defined
 
 // ==========================================
 // SPI BUS (SSD1306 Display)
@@ -32,13 +33,13 @@
 #define VOLUME_ENCODER_B_GPIO 2
 #define VOLUME_ENCODER_PRESS_GPIO 1
 
-#define STATION_ENCODER_A_GPIO 45
-#define STATION_ENCODER_B_GPIO 40
-#define STATION_ENCODER_PRESS_GPIO 41
+#define STATION_ENCODER_A_GPIO 6
+#define STATION_ENCODER_B_GPIO 5
+#define STATION_ENCODER_PRESS_GPIO 4
 
 // ==========================================
 // IR REMOTE
 // ==========================================
-#define IR_TX_GPIO 19 // note that we can't use internal usb if we use this pin.
+#define IR_TX_GPIO 10 // note that we can't use internal usb if we use this pin.
 
 #endif // _GPIO_ASSIGNMENTS_H_
