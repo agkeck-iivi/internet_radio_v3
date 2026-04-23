@@ -20,11 +20,11 @@
 // ==========================================
 // SPI BUS (SSD1306 Display)
 // ==========================================
-#define DISPLAY_SPI_SCLK_GPIO 11
-#define DISPLAY_SPI_MOSI_GPIO 12
-#define DISPLAY_SPI_RST_GPIO 13
-#define DISPLAY_SPI_DC_GPIO 14
-#define DISPLAY_SPI_CS_GPIO 8
+#define DISPLAY_SPI_SCLK_GPIO 7
+#define DISPLAY_SPI_MOSI_GPIO 15
+#define DISPLAY_SPI_RST_GPIO 16
+#define DISPLAY_SPI_DC_GPIO 17
+#define DISPLAY_SPI_CS_GPIO 18
 
 // ==========================================
 // ENCODERS (Rotary Push Buttons)
@@ -40,6 +40,6 @@
 // ==========================================
 // IR REMOTE
 // ==========================================
-#define IR_TX_GPIO 10 // note that we can't use internal usb if we use this pin.
+#define IR_TX_GPIO 10 
 
 #endif // _GPIO_ASSIGNMENTS_H_
