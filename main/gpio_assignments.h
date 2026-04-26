@@ -40,6 +40,6 @@
 // ==========================================
 // IR REMOTE
 // ==========================================
-#define IR_TX_GPIO 10 
+#define IR_TX_GPIO 8
 
 #endif // _GPIO_ASSIGNMENTS_H_
