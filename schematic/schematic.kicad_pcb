@@ -842,7 +842,7 @@
 			(at 0 -3.45 0)
 			(layer "F.SilkS")
 			(hide yes)
-			(uuid "60e25d7c-da7c-4628-a846-bf4ac2f56274")
+			(uuid "4f870610-85c9-44e2-a2b5-a892c97f6b91")
 			(effects
 				(font
 					(size 1 1)
@@ -853,7 +853,7 @@
 		(property "Value" "MountingHole_2.5mm"
 			(at 0 3.45 0)
 			(layer "F.Fab")
-			(uuid "f127576c-d707-4a17-b928-4e03bd70d91b")
+			(uuid "2abc3f77-aeb5-48ff-8048-e15a264f92e4")
 			(effects
 				(font
 					(size 1 1)
@@ -865,7 +865,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "b784c723-5850-4323-8a09-b4c4afb676a2")
+			(uuid "e2fe1224-a705-44a7-bb07-e6c01d4b5c2c")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -877,7 +877,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "3fa38dc0-70f8-4440-8340-381f5ddc811e")
+			(uuid "41869c77-09bf-453b-bbee-9d890053ee9c")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2170,7 +2170,7 @@
 		(property "Reference" "station select"
 			(at -0.1 -4.3 0)
 			(layer "F.SilkS")
-			(uuid "55aabbfb-5192-4575-b57f-08e6d3684fa5")
+			(uuid "52b758e1-9dbb-469d-a678-5ad4707f4f5f")
 			(effects
 				(font
 					(size 1 1)
@@ -2181,7 +2181,7 @@
 		(property "Value" "station select"
 			(at 4.4 9.5 0)
 			(layer "F.Fab")
-			(uuid "d49924c5-6610-4f14-8f13-b5373b976f11")
+			(uuid "c938007c-2d0f-4cb5-a5bb-2ad99e3b49cc")
 			(effects
 				(font
 					(size 1 1)
@@ -2193,7 +2193,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "a05b8028-077c-4ff6-93a2-01af6da57833")
+			(uuid "ae7a96de-3759-4488-bb2f-cded756dab24")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2205,7 +2205,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "305e3bfe-0115-43aa-b634-614a9043a515")
+			(uuid "07dd48a4-db25-43a3-a01c-e3a966283533")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4811,7 +4811,7 @@
 			(at -0.2 -6.2 0)
 			(unlocked yes)
 			(layer "F.SilkS")
-			(uuid "178bd598-66a5-4f0a-809c-db9d5f66e57c")
+			(uuid "31054760-8919-4660-a81f-a55dac1870fb")
 			(effects
 				(font
 					(size 1 1)
@@ -4824,7 +4824,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "9d75326e-4744-4376-908d-b1d53eb72c43")
+			(uuid "1d519f40-1652-4cbf-bfc1-394d47d0158c")
 			(effects
 				(font
 					(size 1 1)
@@ -4837,7 +4837,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "70b0d05c-7235-4c54-adb4-4a1227b0978a")
+			(uuid "452daf04-cbc2-4cc7-b8f1-c69cba2e4cc0")
 			(effects
 				(font
 					(size 1 1)
@@ -4850,7 +4850,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "db59c369-7a84-448a-a1d4-f773aba9e83a")
+			(uuid "0ebb5ba0-a25d-482f-87d7-9569c179bb74")
 			(effects
 				(font
 					(size 1 1)
@@ -6405,6 +6405,28 @@
 		(layer "F.SilkS")
 		(uuid "a7e2c01e-39e6-4bdd-bc2b-f6c8286a29f6")
 	)
+	(gr_circle
+		(center 125.55 74.45)
+		(end 128.95 74.55)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill yes)
+		(layer "B.SilkS")
+		(uuid "1129704e-6c2e-4925-a8b0-06fcb8a3b507")
+	)
+	(gr_circle
+		(center 126.55 108.9)
+		(end 129.95 109)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill yes)
+		(layer "B.SilkS")
+		(uuid "1d4342ef-a339-400d-b003-fb45b985e495")
+	)
 	(gr_line
 		(start 38 37)
 		(end 140 37)
@@ -6885,6 +6907,102 @@
 				(bold yes)
 			)
 			(justify left bottom)
+		)
+	)
+	(gr_text "Connecting to wifi"
+		(at 89.05 112.05 0)
+		(layer "B.SilkS")
+		(uuid "8d41e40b-8078-461a-8756-547e51655892")
+		(effects
+			(font
+				(size 1.524 1.524)
+				(thickness 0.3048)
+				(bold yes)
+			)
+			(justify left bottom mirror)
+		)
+	)
+	(gr_text "Volume"
+		(at 132.4 95.575 0)
+		(layer "B.SilkS")
+		(uuid "894c9a0b-e514-4537-a5c1-8f373d67da75")
+		(effects
+			(font
+				(size 1.524 1.524)
+				(thickness 0.3048)
+				(bold yes)
+			)
+			(justify left bottom mirror)
+		)
+	)
+	(gr_text "Station"
+		(at 132.55 85.45 0)
+		(layer "B.SilkS")
+		(uuid "df499d2e-b343-461b-bfb8-932196944a43")
+		(effects
+			(font
+				(size 1.524 1.524)
+				(thickness 0.3048)
+				(bold yes)
+			)
+			(justify left bottom mirror)
+		)
+	)
+	(gr_text_box "Hold down volume button during reboot.  When the provisioning message {dblquote}Setup WIFI with ESP BLE Prov app{dblquote} shows on the screen use the app to supply wifi credentials."
+		(start 56.05 112.7)
+		(end 89.15 118.75)
+		(margins 1.0025 1.0025 1.0025 1.0025)
+		(layer "B.SilkS")
+		(uuid "7fe73e01-3063-4cd3-baa4-eaf26c5ca502")
+		(effects
+			(font
+				(size 0.8128 0.8128)
+				(thickness 0.1016)
+			)
+			(justify left mirror)
+		)
+		(border yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+	)
+	(gr_text_box "rotate: adjust volume\nsingle press: toggle mute\ndouble press: toggle ir remote on/off"
+		(start 106.7 96.225)
+		(end 132.5 101.075)
+		(margins 1.0025 1.0025 1.0025 1.0025)
+		(layer "B.SilkS")
+		(uuid "bcfb3d78-38b4-4422-8a3d-5a1829abdb4a")
+		(effects
+			(font
+				(size 0.8128 0.8128)
+				(thickness 0.1016)
+			)
+			(justify left mirror)
+		)
+		(border yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+	)
+	(gr_text_box "rotate: scroll stations\nsingle press: show ip\nlong press: reboot"
+		(start 116.35 86.2)
+		(end 132.5 90.65)
+		(margins 1.0025 1.0025 1.0025 1.0025)
+		(layer "B.SilkS")
+		(uuid "a055911b-94da-4c25-9d7a-090fd3cf1ab4")
+		(effects
+			(font
+				(size 0.8128 0.8128)
+				(thickness 0.1016)
+			)
+			(justify left mirror)
+		)
+		(border yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
 		)
 	)
 	(segment
@@ -8027,6 +8145,18 @@
 				(xy 35 29) (xy 34 127) (xy 157 129) (xy 156 32)
 			)
 		)
+	)
+	(group ""
+		(uuid "b1ef9ac5-bf1b-4c70-beb3-cb026a3b5c85")
+		(members "7fe73e01-3063-4cd3-baa4-eaf26c5ca502" "8d41e40b-8078-461a-8756-547e51655892")
+	)
+	(group ""
+		(uuid "c2c8f179-a02b-4e26-ad40-177a67cb3151")
+		(members "894c9a0b-e514-4537-a5c1-8f373d67da75" "bcfb3d78-38b4-4422-8a3d-5a1829abdb4a")
+	)
+	(group ""
+		(uuid "ea111d07-6291-4230-a4fb-cb11498be6f8")
+		(members "a055911b-94da-4c25-9d7a-090fd3cf1ab4" "df499d2e-b343-461b-bfb8-932196944a43")
 	)
 	(embedded_fonts no)
 )
