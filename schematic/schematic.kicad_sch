@@ -4658,16 +4658,6 @@
 		)
 		(uuid "343d1fcb-8c64-489c-b68d-050ad8cedd45")
 	)
-	(label "volume_A"
-		(at 99.06 97.79 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "36e5feae-8a05-4237-a705-8a80c7bb6d63")
-	)
 	(label "station_A"
 		(at 154.94 102.87 0)
 		(effects
@@ -4818,6 +4808,16 @@
 		)
 		(uuid "6ab9a3f0-5f36-44d2-9068-cc9c8fa55cf6")
 	)
+	(label "volume_A"
+		(at 153.67 92.71 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "6eff1f87-bb60-4caf-b1ad-896c9f92034f")
+	)
 	(label "GPIO11/ADC2_CH0"
 		(at 152.4 118.11 0)
 		(effects
@@ -4869,14 +4869,14 @@
 		(uuid "86ca719c-ba5d-42ed-ab69-c46498b489d3")
 	)
 	(label "volume_sw"
-		(at 153.67 92.71 0)
+		(at 99.06 97.79 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify left bottom)
+			(justify right bottom)
 		)
-		(uuid "89dbbb8e-b919-4be9-b4fe-b486ead90305")
+		(uuid "86e66ab2-6c9f-4108-a9f1-b6db38437a06")
 	)
 	(label "i2s_lrclk"
 		(at 154.94 151.13 0)

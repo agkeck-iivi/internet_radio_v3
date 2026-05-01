@@ -29,9 +29,9 @@
 // ==========================================
 // ENCODERS (Rotary Push Buttons)
 // ==========================================
-#define VOLUME_ENCODER_A_GPIO 42
+#define VOLUME_ENCODER_A_GPIO 1
 #define VOLUME_ENCODER_B_GPIO 2
-#define VOLUME_ENCODER_PRESS_GPIO 1
+#define VOLUME_ENCODER_PRESS_GPIO 42
 
 #define STATION_ENCODER_A_GPIO 5
 #define STATION_ENCODER_B_GPIO 4
@@ -43,4 +43,3 @@
 #define IR_TX_GPIO 8
 
 #endif // _GPIO_ASSIGNMENTS_H_
-    
