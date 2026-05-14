@@ -21,5 +21,9 @@ managed_components/
 ER-OLEDM015-2_Datasheet.pdf
 
 # schematic and pcb
-schematic-backups/
-gerbers/
+schematic/schematic-backups/
+schematic/gerbers/
+schematic/.history/
+schematic/fp-info-cache
+schematic/*.kicad_prl
+schematic/*.lck
