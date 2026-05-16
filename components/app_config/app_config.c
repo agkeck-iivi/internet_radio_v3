@@ -12,7 +12,7 @@ app_runtime_config_t g_runtime_config = {
     .power_save_mode = POWER_SAVE_LIGHT_DEEP,
     .light_sleep_delay_ms = 20 * 60 * 1000,    // 20 minutes (prod default)
     .deep_sleep_delay_ms = 2 * 60 * 60 * 1000, // 2 hours
-    .ir_is_enabled = false,
+    .ir_is_enabled = true,
 };
 
 void load_app_config(void) {
@@ -59,8 +59,10 @@ void save_app_config(void) {
     return;
   }
 
-  nvs_set_u8(nvs_handle, "anlg_attn", (uint8_t)g_runtime_config.analog_attenuation);
-  nvs_set_u8(nvs_handle, "digi_attn", (uint8_t)g_runtime_config.digital_attenuation);
+  nvs_set_u8(nvs_handle, "anlg_attn",
+             (uint8_t)g_runtime_config.analog_attenuation);
+  nvs_set_u8(nvs_handle, "digi_attn",
+             (uint8_t)g_runtime_config.digital_attenuation);
   nvs_set_u8(nvs_handle, "pwr_save", (uint8_t)g_runtime_config.power_save_mode);
   nvs_set_u32(nvs_handle, "light_dly", g_runtime_config.light_sleep_delay_ms);
   nvs_set_u32(nvs_handle, "deep_dly", g_runtime_config.deep_sleep_delay_ms);
