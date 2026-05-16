@@ -181,6 +181,11 @@ The following table outlines the current draw and estimated annual energy costs 
 *\*Costs are rounded to the nearest cent.*
 *†Deep sleep current is dominated by the DevKitC's onboard LDO quiescent current (~5mA) and Power LED (~3mA), as the ESP32-S3 chip itself draws <100µA in this state.*
 
+#### Sleep States
+* **Light Sleep**: Entered after a period of inactivity while muted. The CPU state is preserved, and the **SSD1306 screen is automatically powered off** to save energy. The system can be woken by either encoder button.
+* **Deep Sleep**: Entered after an extended period in light sleep (if configured). The system performs a full power-down. **Only the Station button (GPIO 6)** can wake the device from this state.
+* **IR Sync**: If enabled, the system automatically sends a "Power Off" IR command to the Bose radio when entering sleep, and a "Power On" command when waking.
+
 ## operation
 
 The radio's user interface is driven by two rotary encoders, each equipped with an integrated push button (switch).
@@ -190,11 +195,11 @@ The radio's user interface is driven by two rotary encoders, each equipped with 
 | Control | Action | Function |
 | :--- | :--- | :--- |
 | **Volume Encoder** | Rotation | Adjust volume (0-100); Auto-unmutes if turned |
-| | Single Click | Toggle Mute/Unmute |
+| | Single Click | Toggle Mute/Unmute; **Wake from Light Sleep** |
 | | Double Click | Send **Bose ON/OFF** IR command |
 | | **Hold at Boot** | **Force Reprovisioning** (Wipe Wi-Fi credentials) |
 | **Station Encoder** | Rotation | Scroll through stations; Selects after 2s inactivity |
-| | Short Press | Display **IP Address** (3 seconds) |
+| | Short Press | Display **IP Address** (3s); **Wake from Mute/Sleep** |
 | | Long Press (>1.5s) | **Reboot** device |
 
 ---
@@ -206,7 +211,8 @@ The radio's user interface is driven by two rotary encoders, each equipped with 
 * **Rotation**: Sets the volume level between 0 and 100.
   * The volume is saved to NVS and persists across reboots.
   * If the device is muted, any rotation will automatically restore the previous volume plus or minus the rotation delta.
-* **Single Click**: Toggles the mute state. Muting sets output to 0 while remembering the previous level for restoration.
+* **Single Click**: Toggles the mute state.
+  * **Wakeup**: If the device is in **Light Sleep**, clicking this button will wake the system and automatically unmute the audio.
 * **Double Click**: Triggers the IR transmitter to send a power toggle command to the connected Bose system.
 * **Boot Action**: Holding this button during power-on or reset will trigger `wifi_prov_mgr_reset_provisioning()`, allowing you to connect a new Wi-Fi network via BLE.
 
@@ -215,8 +221,11 @@ The radio's user interface is driven by two rotary encoders, each equipped with 
 * **Rotation**: Navigates the station list.
   * Turning the knob switches the display to the **Station Selection** screen.
   * **Auto-Selection**: Once you stop turning, the radio waits for **2 seconds** before committing the change, switching the stream, and returning to the Home screen.
-* **Short Press**: Briefly switches the screen to show the current IP address. This is useful for accessing the web configuration interface.
-* **Long Press**: Holding for more than 1.5 seconds triggers an immediate system reboot. A "Rebooting" message will appear on the display as confirmation.
+* **Short Press**:
+  * **Normal Mode**: Briefly switches the screen to show the current IP address.
+  * **Mute/Sleep Mode**: If the device is muted or in **Light Sleep**, this button acts as a "Wake" key, restoring the audio immediately.
+  * **Deep Sleep Wakeup**: This is the **primary wakeup button** for Deep Sleep. Because GPIO 6 is an RTC-capable pin, it is used to bring the system back from a deep sleep state (performing a full reboot).
+* **Long Press**: Holding for more than 1.5 seconds triggers an immediate system reboot.
 
 ## Bugs
 

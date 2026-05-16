@@ -293,7 +293,8 @@ static void volume_press_task(void *pvParameters) {
         g_last_wakeup_time = LLONG_MAX;
 
         audio_pipeline_manager_sleep(&audio_pipeline_components,
-                                     VOLUME_PRESS_GPIO, requested_sleep_us);
+                                     VOLUME_PRESS_GPIO, STATION_PRESS_GPIO,
+                                     requested_sleep_us);
 
         // --- AFTER WAKEUP ---
 
@@ -323,10 +324,9 @@ static void volume_press_task(void *pvParameters) {
           ESP_LOGI(TAG, "Deep sleep timeout reached. Transitioning to system "
                         "deep sleep...");
 
-          // Ensure button is released before entering deep sleep to avoid
-          // immediate wakeup
-          while (gpio_get_level(VOLUME_PRESS_GPIO) == 0) {
-            ESP_LOGI(TAG, "Waiting for button release before deep sleep...");
+          // Ensure Station button is released before entering deep sleep
+          while (gpio_get_level(STATION_PRESS_GPIO) == 0) {
+            ESP_LOGI(TAG, "Waiting for Station button release before deep sleep...");
             vTaskDelay(pdMS_TO_TICKS(100));
           }
 
@@ -337,16 +337,16 @@ static void volume_press_task(void *pvParameters) {
           // Disable all wakeup sources before re-configuring for deep sleep
           esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
 
-          // Ensure RTC pull-up is enabled for deep sleep
-          rtc_gpio_init(VOLUME_PRESS_GPIO);
-          rtc_gpio_set_direction(VOLUME_PRESS_GPIO, RTC_GPIO_MODE_INPUT_ONLY);
-          rtc_gpio_pullup_en(VOLUME_PRESS_GPIO);
-          rtc_gpio_pulldown_dis(VOLUME_PRESS_GPIO);
+          // Ensure RTC pull-up is enabled for deep sleep (using STATION_PRESS_GPIO which is RTCIO)
+          rtc_gpio_init(STATION_PRESS_GPIO);
+          rtc_gpio_set_direction(STATION_PRESS_GPIO, RTC_GPIO_MODE_INPUT_ONLY);
+          rtc_gpio_pullup_en(STATION_PRESS_GPIO);
+          rtc_gpio_pulldown_dis(STATION_PRESS_GPIO);
 
-          // Configure deep sleep wakeup on Volume Press GPIO
-          esp_sleep_enable_ext0_wakeup(VOLUME_PRESS_GPIO, 0); // Wake on LOW
+          // Configure deep sleep wakeup on Station Press GPIO
+          esp_sleep_enable_ext0_wakeup(STATION_PRESS_GPIO, 0); // Wake on LOW
 
-          ESP_LOGI(TAG, "Entering deep sleep NOW. Wake up with Volume Press.");
+          ESP_LOGI(TAG, "Entering deep sleep NOW. Wake up with Station Press.");
           esp_deep_sleep_start();
         } else {
           ESP_LOGI(TAG, "Light sleep interrupted (duration glitch or button "
@@ -397,8 +397,7 @@ static void volume_press_task(void *pvParameters) {
 static void station_press_task(void *pvParameters) {
   ESP_LOGI(TAG, "Station press button task started.");
   while (1) {
-    if (gpio_get_level(STATION_PRESS_GPIO) ==
-        0) { // Button is pressed (active low)
+    if (gpio_get_level(STATION_PRESS_GPIO) == 0) { // Button is pressed (active low)
       int64_t press_start_time = esp_timer_get_time();
       bool long_press_handled = false;
 
@@ -427,26 +426,37 @@ static void station_press_task(void *pvParameters) {
       // Only process short press if long press wasn't handled (and device
       // didn't restart)
       if (!long_press_handled) {
-        int64_t press_duration = esp_timer_get_time() - press_start_time;
-        ESP_LOGI(TAG, "Short press detected (%" PRId64 " us). Showing IP.",
-                 press_duration);
-        switch_to_ip_screen();
-
-        // Get IP
-        esp_netif_ip_info_t ip_info;
-        esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
-        if (netif) {
-          esp_netif_get_ip_info(netif, &ip_info);
-          char ip_str[IP4ADDR_STRLEN_MAX];
-          esp_ip4addr_ntoa(&ip_info.ip, ip_str, IP4ADDR_STRLEN_MAX);
-          update_ip_label(ip_str);
+        if (is_muted) {
+          // Wake from mute
+          is_muted = false;
+          audio_hal_set_mute(g_volume_counter_ptr->board_handle->audio_hal,
+                             is_muted);
+          update_mute_state(is_muted);
+          save_mute_state_to_nvs(is_muted);
+          ESP_LOGI(TAG, "Hardware unmuted via Station button");
+          // Skip IP display when unmuting to act as a 'wake' action
         } else {
-          update_ip_label("No Netif");
-        }
+          int64_t press_duration = esp_timer_get_time() - press_start_time;
+          ESP_LOGI(TAG, "Short press detected (%" PRId64 " us). Showing IP.",
+                   press_duration);
+          switch_to_ip_screen();
 
-        // Wait 5 seconds
-        vTaskDelay(pdMS_TO_TICKS(IP_SCREEN_DISPLAY_TIME_MS));
-        switch_to_home_screen();
+          // Get IP
+          esp_netif_ip_info_t ip_info;
+          esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+          if (netif) {
+            esp_netif_get_ip_info(netif, &ip_info);
+            char ip_str[IP4ADDR_STRLEN_MAX];
+            esp_ip4addr_ntoa(&ip_info.ip, ip_str, IP4ADDR_STRLEN_MAX);
+            update_ip_label(ip_str);
+          } else {
+            update_ip_label("No Netif");
+          }
+
+          // Wait 5 seconds
+          vTaskDelay(pdMS_TO_TICKS(IP_SCREEN_DISPLAY_TIME_MS));
+          switch_to_home_screen();
+        }
       }
     }
     vTaskDelay(pdMS_TO_TICKS(STATION_PRESS_POLLING_PERIOD_MS));

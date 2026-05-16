@@ -263,7 +263,7 @@ esp_err_t destroy_audio_pipeline(audio_pipeline_components_t *components) {
 }
 
 esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
-                                       int wakeup_gpio,
+                                       int wakeup_gpio1, int wakeup_gpio2,
                                        uint64_t timer_wakeup_us) {
   // timer_wakeup_us is the duration for light sleep before potential deep sleep
   if (components == NULL || components->pipeline == NULL) {
@@ -276,12 +276,19 @@ esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
   g_is_pipeline_running = false;
   destroy_audio_pipeline(components);
 
-  ESP_LOGI(TAG, "Configuring wakeup on GPIO %d (LOW level)", wakeup_gpio);
+  ESP_LOGI(TAG, "Configuring wakeup on GPIO %d and %d (LOW level)", wakeup_gpio1, wakeup_gpio2);
   // 6. Configure hardware wakeup
-  esp_err_t err = gpio_wakeup_enable(wakeup_gpio, GPIO_INTR_LOW_LEVEL);
+  esp_err_t err = gpio_wakeup_enable(wakeup_gpio1, GPIO_INTR_LOW_LEVEL);
   if (err != ESP_OK) {
-    ESP_LOGE(TAG, "Failed to enable GPIO wakeup: %d", err);
+    ESP_LOGE(TAG, "Failed to enable GPIO wakeup 1: %d", err);
     return err;
+  }
+  if (wakeup_gpio2 >= 0) {
+    err = gpio_wakeup_enable(wakeup_gpio2, GPIO_INTR_LOW_LEVEL);
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "Failed to enable GPIO wakeup 2: %d", err);
+      return err;
+    }
   }
   // 7. Enable GPIO as wakeup source
   err = esp_sleep_enable_gpio_wakeup();
