@@ -3,7 +3,7 @@
   "idf.espIdfPath": "/home/agkeck/esp/v5.5.1/esp-idf",
   "idf.toolsPath": "/home/agkeck/.espressif",
   "idf.pythonInstallPath": "/usr/bin/python",
-  "idf.port": "/dev/ttyACM0",
+  "idf.port": "/dev/ttyUSB0",
   "idf.flashType": "UART",
   "files.associations": {
     "esp_netif.h": "c",
