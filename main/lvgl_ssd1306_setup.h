@@ -18,6 +18,11 @@ lv_display_t *lvgl_ssd1306_setup(void);
  */
 void lvgl_ssd1306_wakeup(void);
 
+/**
+ * @brief Puts the display to sleep (turns it off).
+ */
+void lvgl_ssd1306_sleep(void);
+
 #ifdef __cplusplus
 }
 #endif

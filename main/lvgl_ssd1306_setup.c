@@ -242,3 +242,15 @@ void lvgl_ssd1306_wakeup(void) {
     _lock_release(&lvgl_api_lock);
   }
 }
+
+void lvgl_ssd1306_sleep(void) {
+  if (g_display == NULL)
+    return;
+  esp_lcd_panel_handle_t panel_handle = lv_display_get_user_data(g_display);
+  if (panel_handle) {
+    ESP_LOGI(TAG, "Turning off SSD1306 panel for sleep");
+    _lock_acquire(&lvgl_api_lock);
+    esp_lcd_panel_disp_on_off(panel_handle, false);
+    _lock_release(&lvgl_api_lock);
+  }
+}

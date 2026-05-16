@@ -17,6 +17,7 @@
 #include "app_config.h"
 #include "ir_remote.h"
 #include "audio_event_iface.h"
+#include "lvgl_ssd1306_setup.h"
 
 extern audio_pipeline_components_t audio_pipeline_components;
 extern volatile bool g_is_pipeline_running;
@@ -301,6 +302,7 @@ esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
   ESP_LOGI(TAG, "Entering light sleep...");
   // 8. Enter low-power state
   esp_task_wdt_deinit();
+  lvgl_ssd1306_sleep();
 
   if (g_runtime_config.ir_is_enabled) {
     ir_remote_turn_audio_off();
