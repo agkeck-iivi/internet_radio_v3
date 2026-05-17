@@ -232,4 +232,4 @@ The radio's user interface is driven by two rotary encoders, each equipped with 
 
 ## Bugs
 
-* Between the prototype and the first board we moved the volume buttoon to gpio 42 to facilitate traces on the PCB.  Unfortunately we forgot that gpio 42 is not an RTC GPIO pin.  As a result, the volume button cannot wake the device from deep sleep.  We moved the wakeup function to the station button (gpio 6) and that works fine.  Currently volume turns it off and station turns it on.  We'll see how that works for us.
+* Between the prototype and the first board we moved the volume button to gpio 42 to facilitate traces on the PCB.  Unfortunately we forgot that gpio 42 is not an RTC GPIO pin.  As a result, the volume button cannot wake the device from deep sleep.  We moved the wakeup function to the station button (gpio 6) and that works fine.  Currently volume turns it off and station turns it on.  We'll see how that works for us.
