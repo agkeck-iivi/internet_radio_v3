@@ -23,6 +23,8 @@ typedef struct {
 } default_station_t;
 
 static const default_station_t default_stations[] = {
+    {"KHEN", "Salida", "https://stream.pacificaservice.org:9000/khen_128",
+     CODEC_TYPE_MP3},
     {"KEXP", "Seattle", "https://kexp.streamguys1.com/kexp160.aac",
      CODEC_TYPE_AAC},
     {"KBUT", "Crested Butte",
@@ -32,13 +34,9 @@ static const default_station_t default_stations[] = {
     {"KSUT", "4 Corners", "https://ksut.streamguys1.com/kute", CODEC_TYPE_AAC},
     {"KDUR", "Durango", "https://kdurradio.fortlewis.edu/stream",
      CODEC_TYPE_MP3},
-    {
-      "KOTO",
-      "Telluride",
-      "http://playerservices.streamtheworld.com/api/livestream-redirect/KOTOFM.mp3",
-      CODEC_TYPE_MP3
-    },
-    {"KHEN", "Salida", "https://stream.pacificaservice.org:9000/khen_128",
+    {"KOTO", "Telluride",
+     "http://playerservices.streamtheworld.com/api/livestream-redirect/"
+     "KOTOFM.mp3",
      CODEC_TYPE_MP3},
     {"KWSB", "Gunnison", "https://kwsb.streamguys1.com/live", CODEC_TYPE_MP3},
     // {"KFFP", "Portland", "http://listen.freeformportland.org:8000/stream",

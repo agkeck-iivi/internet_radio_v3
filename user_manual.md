@@ -21,7 +21,7 @@ The radio's display will show a message indicating it is waiting to be provision
 
 1. **Download the App**: Download the **ESP BLE Provisioning** app from the Apple App Store or Google Play Store.
 2. **Start Provisioning**: Open the app and tap **"Provision Device"**.
-3. **Connect to the Radio**: The app will search for nearby Bluetooth Low Energy (BLE) devices. Select the radio from the list of discovered devices (it will likely have a name starting with `agk radio:` followed by some characters from the MAC address). Note: The radio does not use a QR code for pairing; simply tap the device in the list to connect.
+3. **Bypass QR Code**:  This device does not use a QR code for pairing.  Instead, the device will broadcast its name (agk radio) and MAC address via Bluetooth Low Energy (BLE).  Select the agk radio:<mac-address> from the list of discovered devices.
 4. **Scan for Wi-Fi**: Once connected via Bluetooth, the app will scan for available Wi-Fi networks in your area.
 5. **Enter Credentials**: Select your home Wi-Fi network (2.4GHz) from the list and enter your Wi-Fi password.
 6. **Complete Setup**: The app will send the credentials to the radio. The app will display "Provisioning Successful," and the radio will connect to the internet.
