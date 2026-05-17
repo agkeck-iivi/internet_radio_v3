@@ -1,6 +1,13 @@
+
 # Internet Radio User Manual
 
 Welcome to your new Internet Radio! This manual will guide you through the initial setup, daily operation, and advanced configuration of your device.
+
+## Note: Converting user manual markdown to pdf
+
+```bash
+pandoc user_manual.md -o user_manual.pdf --pdf-engine=typst -V mainfont="Libertinus Serif"
+```
 
 ## 1. Initial Setup and Wi-Fi Provisioning
 
@@ -53,13 +60,13 @@ To save energy, the radio can automatically enter sleep states if it is muted an
 
 You can configure advanced settings and manage your saved radio stations using the built-in web interface.
 
-![Landing Page](/home/agkeck/project/mc_projects/esp32/internet_radio_v3/images/landing_page.png)
+![Landing Page](images/landing_page.png)
 
 To access the interface, find the radio's IP address (by short-pressing the Station knob) and type it into the web browser of a computer or smartphone connected to the same Wi-Fi network. For example: `http://192.168.1.100`
 
 ### Device Configuration
 
-![Device Configuration](/home/agkeck/project/mc_projects/esp32/internet_radio_v3/images/config_page.png)
+![Device Configuration](images/config_page.png)
 
 Navigate to the device configuration page (e.g., `http://<IP_ADDRESS>/config`) to adjust system settings:
 
@@ -70,13 +77,13 @@ Navigate to the device configuration page (e.g., `http://<IP_ADDRESS>/config`) t
 
 ### Station Configuration
 
-![Station Configuration](/home/agkeck/project/mc_projects/esp32/internet_radio_v3/images/stations_page.png)
+![Station Configuration](images/stations_page.png)
 
 Navigate to the station configuration page to manage your radio dial. From this page you can:
 
 * **Add New Stations**: Enter the Name, Stream URI, and select the appropriate audio codec (MP3, AAC, OGG, or FLAC).
-* **Edit/Remove Stations**: Update existing stream URLs if they change, or delete stations you no longer listen to.
-* **Reorder**: Change the order in which stations appear when you turn the Station knob.
+* **Edit/Remove Stations**: Update existing stream URLs if they change, or delete stations you no longer listen to using the "**x**" button.
+* **Reorder**: Change the order in which stations appear when you turn the Station knob by **dragging** the rows up or down.
 
 Changes made on the station configuration page are saved permanently, but the radio may need to be rebooted to apply the new list to the main interface.
 
@@ -86,7 +93,10 @@ If you want to add a new station, you will need its direct audio stream URL. Sta
 
 The easiest way to find compatible stream URLs is to use **[fmstream.org](https://fmstream.org)**.
 
-1. Search for your desired radio station on the site.
-2. Look for the direct streaming links provided in the search results (they often end in `.mp3`, `.aac`, or point to a streaming server port).
-3. Copy the URL and paste it into your radio's Station Configuration page.
-4. Select the matching codec (MP3 or AAC are the most common).
+1. Search for your desired radio station on the site (for example, "KEXP").
+2. Look for the direct streaming links provided in the search results. Next to each URL, you will see the **format/codec** (e.g., MP3, AAC) and the bitrate (e.g., 128 kbps).
+3. Copy the URL that corresponds to the format you want (typically ending in `.mp3` or `.aac`), and paste it into your radio's Station Configuration page.
+
+![fmstream KEXP Example](images/fmstream_kexp.png)
+
+1. In the radio's configuration, select the exact codec (MP3, AAC, etc.) that was listed next to the URL on the fmstream website.
