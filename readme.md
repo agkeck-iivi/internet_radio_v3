@@ -10,8 +10,6 @@
 
 ![Version 3 Prototype](images/version3_prototype.jpg)
 
-### header wiring
-
 ### schematic
 
 ![Version 3 Schematic](schematic/schematic.pdf)
@@ -234,11 +232,4 @@ The radio's user interface is driven by two rotary encoders, each equipped with 
 
 ## Bugs
 
-* 5v power does not work perfectly. On first power on after a period off,
-the system will not boot. If the 5v power is cycled once, it will work fine.
-  * A 10 uF decoupling capacitor was added across the 5v header but that didn't solve the issue.
-  * A 470 uF capacitor was added across the 5v header but that didn't solve the issue.
-  * A 10 uF capacitor was added to rst pin to ground but that didn't solve the issue.
-  * A 470 uF capacitor was added to rst pin to ground but that didn't solve the issue.
-
-  * **Solved** by adding a 10K pullup resistor from GPIO 0 to 3.3v.  This causes the radio to reliably boot into stored application when running on external 5v supply.
+* Between the prototype and the first board we moved the volume buttoon to gpio 42 to facilitate traces on the PCB.  Unfortunately we forgot that gpio 42 is not an RTC GPIO pin.  As a result, the volume button cannot wake the device from deep sleep.  We moved the wakeup function to the station button (gpio 6) and that works fine.  Currently volume turns it off and station turns it on.  We'll see how that works for us.
