@@ -122,8 +122,35 @@ static const rmt_symbol_word_t bose_on_off_signal[] = {
 };
 // ----------------------------------------------------------------------------
 
+typedef struct {
+    esp_err_t (*turn_audio_on)(void);
+    esp_err_t (*turn_audio_off)(void);
+    esp_err_t (*toggle_audio)(void);
+} ir_remote_ops_t;
+
 static rmt_channel_handle_t g_tx_channel = NULL;
 static ir_protocol_t g_current_protocol = IR_PROTOCOL_NONE;
+static const ir_remote_ops_t* g_current_ops = NULL;
+
+static esp_err_t send_signal(const rmt_symbol_word_t* signal_data, size_t signal_size);
+
+static esp_err_t bose_turn_audio_on(void);
+static esp_err_t bose_turn_audio_off(void);
+static esp_err_t bose_toggle_audio(void);
+
+static const ir_remote_ops_t bose_ops = {
+    .turn_audio_on = bose_turn_audio_on,
+    .turn_audio_off = bose_turn_audio_off,
+    .toggle_audio = bose_toggle_audio,
+};
+
+static void update_current_ops(ir_protocol_t protocol) {
+    if (protocol == IR_PROTOCOL_BOSE) {
+        g_current_ops = &bose_ops;
+    } else {
+        g_current_ops = NULL;
+    }
+}
 
 esp_err_t ir_remote_init(gpio_num_t tx_gpio_num, ir_protocol_t protocol)
 {
@@ -166,6 +193,7 @@ esp_err_t ir_remote_init(gpio_num_t tx_gpio_num, ir_protocol_t protocol)
     }
 
     g_current_protocol = protocol;
+    update_current_ops(protocol);
 
     return ESP_OK;
 }
@@ -187,6 +215,7 @@ esp_err_t ir_remote_set_protocol(ir_protocol_t protocol)
 {
     ESP_LOGI(TAG, "Changing IR protocol from %d to %d", g_current_protocol, protocol);
     g_current_protocol = protocol;
+    update_current_ops(protocol);
     return ESP_OK;
 }
 
@@ -221,28 +250,43 @@ static esp_err_t send_signal(const rmt_symbol_word_t* signal_data, size_t signal
     return ret;
 }
 
+static esp_err_t bose_turn_audio_on(void)
+{
+    ESP_LOGI(TAG, "Transmitting BOSE Audio ON (AUX) signal...");
+    return send_signal(bose_aux_signal, sizeof(bose_aux_signal));
+}
+
+static esp_err_t bose_turn_audio_off(void)
+{
+    ESP_LOGI(TAG, "Transmitting BOSE Audio OFF sequence (AUX -> 100ms -> TOGGLE)...");
+    esp_err_t ret = send_signal(bose_aux_signal, sizeof(bose_aux_signal));
+    if (ret != ESP_OK) {
+        return ret;
+    }
+    vTaskDelay(pdMS_TO_TICKS(100));
+    return send_signal(bose_on_off_signal, sizeof(bose_on_off_signal));
+}
+
+static esp_err_t bose_toggle_audio(void)
+{
+    ESP_LOGI(TAG, "Transmitting BOSE Audio TOGGLE (ON/OFF base) signal...");
+    return send_signal(bose_on_off_signal, sizeof(bose_on_off_signal));
+}
+
 esp_err_t ir_remote_turn_audio_on(void)
 {
-    if (g_current_protocol == IR_PROTOCOL_BOSE) {
-        ESP_LOGI(TAG, "Transmitting BOSE Audio ON (AUX) signal...");
-        return send_signal(bose_aux_signal, sizeof(bose_aux_signal));
+    if (g_current_ops && g_current_ops->turn_audio_on) {
+        return g_current_ops->turn_audio_on();
     }
     
-    // Fallback/No-op for NONE or unsupported protocols
     ESP_LOGW(TAG, "Turn audio ON not supported for protocol %d", g_current_protocol);
     return ESP_OK;
 }
 
 esp_err_t ir_remote_turn_audio_off(void)
 {
-    if (g_current_protocol == IR_PROTOCOL_BOSE) {
-        ESP_LOGI(TAG, "Transmitting BOSE Audio OFF sequence (AUX -> 100ms -> TOGGLE)...");
-        esp_err_t ret = send_signal(bose_aux_signal, sizeof(bose_aux_signal));
-        if (ret != ESP_OK) {
-            return ret;
-        }
-        vTaskDelay(pdMS_TO_TICKS(100));
-        return send_signal(bose_on_off_signal, sizeof(bose_on_off_signal));
+    if (g_current_ops && g_current_ops->turn_audio_off) {
+        return g_current_ops->turn_audio_off();
     }
     
     ESP_LOGW(TAG, "Turn audio OFF not supported for protocol %d", g_current_protocol);
@@ -251,9 +295,8 @@ esp_err_t ir_remote_turn_audio_off(void)
 
 esp_err_t ir_remote_toggle_audio(void)
 {
-    if (g_current_protocol == IR_PROTOCOL_BOSE) {
-        ESP_LOGI(TAG, "Transmitting BOSE Audio TOGGLE (ON/OFF base) signal...");
-        return send_signal(bose_on_off_signal, sizeof(bose_on_off_signal));
+    if (g_current_ops && g_current_ops->toggle_audio) {
+        return g_current_ops->toggle_audio();
     }
     
     ESP_LOGW(TAG, "Toggle audio not supported for protocol %d", g_current_protocol);
