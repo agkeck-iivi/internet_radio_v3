@@ -58,7 +58,7 @@ extern audio_pipeline_components_t audio_pipeline_components;
 #define VOLUME_PRESS_POLLING_PERIOD_MS 20
 
 #define STATION_POLLING_PERIOD_MS 100
-#define STATION_PRESS_POLLING_PERIOD_MS 100
+#define STATION_PRESS_POLLING_PERIOD_MS 20
 
 // this pause allows the user to change the station multiple times before the
 // change takes effect
@@ -263,6 +263,8 @@ static void volume_press_task(void *pvParameters) {
           save_mute_state_to_nvs(false);
         }
       }
+      // Debounce after processing press
+      vTaskDelay(pdMS_TO_TICKS(50));
     }
 
     // Check for light sleep timeout if muted and power saving is enabled
@@ -388,8 +390,6 @@ static void volume_press_task(void *pvParameters) {
       }
     }
 
-    // Debounce after everything
-    vTaskDelay(pdMS_TO_TICKS(50));
     vTaskDelay(pdMS_TO_TICKS(VOLUME_PRESS_POLLING_PERIOD_MS));
   }
 }
@@ -458,6 +458,8 @@ static void station_press_task(void *pvParameters) {
           switch_to_home_screen();
         }
       }
+      // Debounce after processing press
+      vTaskDelay(pdMS_TO_TICKS(50));
     }
     vTaskDelay(pdMS_TO_TICKS(STATION_PRESS_POLLING_PERIOD_MS));
   }
