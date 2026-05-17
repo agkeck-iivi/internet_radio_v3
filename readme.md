@@ -8,11 +8,16 @@
 
 ### prototype
 
+![Version 3 Prototype](images/version3_prototype.jpg)
+
 ### header wiring
 
 ### schematic
 
+![Version 3 Schematic](schematic/schematic.pdf)
+
 ### build
+![Version 3 Prototype](images/version3_first_board.jpg)
 
 ## software
 
