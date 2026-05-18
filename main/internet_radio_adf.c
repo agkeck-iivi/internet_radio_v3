@@ -667,31 +667,22 @@ void app_main(void) {
       ESP_LOGE(TAG, "Error (%s) reading 'volume'!", esp_err_to_name(err));
     }
 
-    // Read mute state from NVS
-    ESP_LOGI(TAG, "Reading mute state from NVS");
-    uint8_t mute_from_nvs = 0; // default to unmuted
-    err = nvs_get_u8(nvs_handle, "mute_state", &mute_from_nvs);
-    if (err == ESP_OK) {
-      initial_mute = (mute_from_nvs != 0);
-      ESP_LOGI(TAG, "Successfully read mute_state = %d", (int)initial_mute);
-    } else if (err == ESP_ERR_NVS_NOT_FOUND) {
-      ESP_LOGI(TAG, "The value 'mute_state' is not initialized yet!");
-    } else {
-      ESP_LOGE(TAG, "Error (%s) reading 'mute_state'!", esp_err_to_name(err));
-    }
+    // Default to muted on any reboot/power-on unless woken by button
+    initial_mute = true;
 
-    // Override mute if waking from deep sleep by button
     if (waked_by_button) {
-      ESP_LOGI(TAG, "Wakeup via button press: Overriding mute state to UNMUTED "
-                    "and updating NVS.");
+      ESP_LOGI(TAG, "Wakeup via button press: Setting state to UNMUTED.");
       initial_mute = false;
-      err = nvs_set_u8(nvs_handle, "mute_state", 0);
-      if (err == ESP_OK) {
-        nvs_commit(nvs_handle);
-      } else {
-        ESP_LOGE(TAG, "Error (%s) updating 'mute_state' in NVS!",
-                 esp_err_to_name(err));
-      }
+    } else {
+      ESP_LOGI(TAG, "Cold boot or non-button wakeup: Defaulting to MUTED.");
+    }
+    
+    // Save the determined mute state to NVS
+    err = nvs_set_u8(nvs_handle, "mute_state", initial_mute ? 1 : 0);
+    if (err == ESP_OK) {
+      nvs_commit(nvs_handle);
+    } else {
+      ESP_LOGE(TAG, "Error (%s) updating 'mute_state' in NVS!", esp_err_to_name(err));
     }
 
     unmuted_volume = initial_volume;
@@ -799,9 +790,12 @@ void app_main(void) {
   ESP_LOGI(TAG, "Initializing IR Remote Component");
   ir_remote_init((gpio_num_t)IR_TX_GPIO_NUM, IR_PROTOCOL_BOSE);
 
-  if (g_runtime_config.ir_is_enabled) {
+  if (g_runtime_config.ir_is_enabled && !initial_mute) {
     ESP_LOGI(TAG, "Sending Audio ON signal");
+    vTaskDelay(pdMS_TO_TICKS(200));
     ir_remote_turn_audio_on();
+  } else if (g_runtime_config.ir_is_enabled && initial_mute) {
+    ESP_LOGI(TAG, "Booting muted. Skipping Audio ON signal.");
   }
 
   ESP_LOGI(TAG, "Waiting for Wi-Fi connection...");

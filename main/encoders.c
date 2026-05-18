@@ -358,6 +358,10 @@ static void volume_press_task(void *pvParameters) {
         // If we reach here, it was a GPIO wakeup (or other)
         ESP_LOGI(TAG, "Resuming from light sleep...");
 
+        if (g_runtime_config.ir_is_enabled) {
+          ir_remote_turn_audio_on();
+        }
+
         // Trigger reconnection immediately (non-blocking)
         set_wifi_sleep_mode(false);
 
