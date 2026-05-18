@@ -311,7 +311,7 @@ esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
   esp_task_wdt_deinit();
   lvgl_ssd1306_sleep();
 
-  if (g_runtime_config.ir_is_enabled) {
+  if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE) {
     ir_remote_turn_audio_off();
   }
 

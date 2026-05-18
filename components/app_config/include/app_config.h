@@ -45,7 +45,7 @@ typedef struct {
   power_save_mode_t power_save_mode;
   uint32_t light_sleep_delay_ms;
   uint32_t deep_sleep_delay_ms;
-  bool ir_is_enabled;
+  uint8_t ir_protocol;
 } app_runtime_config_t;
 
 extern app_runtime_config_t g_runtime_config;

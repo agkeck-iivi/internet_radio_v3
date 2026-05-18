@@ -117,9 +117,120 @@ static const rmt_symbol_word_t bose_on_off_signal[] = {
     {.duration0 = 517, .level0 = 1, .duration1 = 588, .level1 = 0},
     {.duration0 = 517, .level0 = 1, .duration1 = 1714, .level1 = 0},
     {.duration0 = 496, .level0 = 1, .duration1 = 1703, .level1 = 0},
+    {.duration0 = 496, .level0 = 1, .duration1 = 0, .level1 = 0},
+};
+
+// ----------------------------------------------------------------------------
+// DUBAS_RADIO Protocol Data (Duplicate of Bose for now)
+// ----------------------------------------------------------------------------
+static const rmt_symbol_word_t dubas_radio_aux_signal[] = {
+    {.duration0 = 1104, .level0 = 1, .duration1 = 1467, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 1427, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 1428, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 1427, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 1447, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 434, .level1 = 0},
+    {.duration0 = 572, .level0 = 1, .duration1 = 435, .level1 = 0},
+    {.duration0 = 571, .level0 = 1, .duration1 = 434, .level1 = 0},
+    {.duration0 = 572, .level0 = 1, .duration1 = 454, .level1 = 0},
+    {.duration0 = 572, .level0 = 1, .duration1 = 435, .level1 = 0},
+    {.duration0 = 572, .level0 = 1, .duration1 = 434, .level1 = 0},
+    {.duration0 = 572, .level0 = 1, .duration1 = 435, .level1 = 0},
+    {.duration0 = 572, .level0 = 1, .duration1 = 454, .level1 = 0},
+    {.duration0 = 572, .level0 = 1, .duration1 = 1427, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 1427, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 1427, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 1417, .level1 = 0},
+    {.duration0 = 9531, .level0 = 1, .duration1 = 4580, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 613, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 1715, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1716, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1735, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 614, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 1715, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1715, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1735, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1715, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1715, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1715, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 634, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 614, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 614, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 614, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 1735, .level1 = 0},
+    {.duration0 = 494, .level0 = 1, .duration1 = 614, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 614, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 1716, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 633, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 613, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 614, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 614, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 634, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 1715, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 614, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 614, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 634, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 614, .level1 = 0},
+    {.duration0 = 492, .level0 = 1, .duration1 = 1715, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1715, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1705, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 0, .level1 = 0},
+};
+
+static const rmt_symbol_word_t dubas_radio_on_off_signal[] = {
+    {.duration0 = 1103, .level0 = 1, .duration1 = 1466, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 433, .level1 = 0},
+    {.duration0 = 573, .level0 = 1, .duration1 = 433, .level1 = 0},
+    {.duration0 = 573, .level0 = 1, .duration1 = 1427, .level1 = 0},
+    {.duration0 = 573, .level0 = 1, .duration1 = 1447, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 433, .level1 = 0},
+    {.duration0 = 572, .level0 = 1, .duration1 = 434, .level1 = 0},
+    {.duration0 = 572, .level0 = 1, .duration1 = 1427, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 453, .level1 = 0},
+    {.duration0 = 573, .level0 = 1, .duration1 = 1427, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 1427, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 432, .level1 = 0},
+    {.duration0 = 573, .level0 = 1, .duration1 = 452, .level1 = 0},
+    {.duration0 = 573, .level0 = 1, .duration1 = 1427, .level1 = 0},
+    {.duration0 = 574, .level0 = 1, .duration1 = 1427, .level1 = 0},
+    {.duration0 = 573, .level0 = 1, .duration1 = 433, .level1 = 0},
+    {.duration0 = 572, .level0 = 1, .duration1 = 1417, .level1 = 0},
+    {.duration0 = 9537, .level0 = 1, .duration1 = 4566, .level1 = 0},
+    {.duration0 = 506, .level0 = 1, .duration1 = 589, .level1 = 0},
+    {.duration0 = 516, .level0 = 1, .duration1 = 1714, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1714, .level1 = 0},
+    {.duration0 = 494, .level0 = 1, .duration1 = 1712, .level1 = 0},
+    {.duration0 = 516, .level0 = 1, .duration1 = 589, .level1 = 0},
+    {.duration0 = 516, .level0 = 1, .duration1 = 1714, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1714, .level1 = 0},
+    {.duration0 = 494, .level0 = 1, .duration1 = 1734, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1714, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1714, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 1714, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 609, .level1 = 0},
+    {.duration0 = 516, .level0 = 1, .duration1 = 589, .level1 = 0},
+    {.duration0 = 517, .level0 = 1, .duration1 = 588, .level1 = 0},
+    {.duration0 = 517, .level0 = 1, .duration1 = 588, .level1 = 0},
+    {.duration0 = 516, .level0 = 1, .duration1 = 1734, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 589, .level1 = 0},
+    {.duration0 = 516, .level0 = 1, .duration1 = 589, .level1 = 0},
+    {.duration0 = 516, .level0 = 1, .duration1 = 1714, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 609, .level1 = 0},
+    {.duration0 = 516, .level0 = 1, .duration1 = 588, .level1 = 0},
+    {.duration0 = 516, .level0 = 1, .duration1 = 589, .level1 = 0},
+    {.duration0 = 517, .level0 = 1, .duration1 = 588, .level1 = 0},
+    {.duration0 = 517, .level0 = 1, .duration1 = 608, .level1 = 0},
+    {.duration0 = 517, .level0 = 1, .duration1 = 1714, .level1 = 0},
+    {.duration0 = 495, .level0 = 1, .duration1 = 589, .level1 = 0},
+    {.duration0 = 517, .level0 = 1, .duration1 = 589, .level1 = 0},
+    {.duration0 = 516, .level0 = 1, .duration1 = 608, .level1 = 0},
+    {.duration0 = 517, .level0 = 1, .duration1 = 588, .level1 = 0},
+    {.duration0 = 517, .level0 = 1, .duration1 = 1714, .level1 = 0},
+    {.duration0 = 496, .level0 = 1, .duration1 = 1703, .level1 = 0},
     {.duration0 = 506, .level0 = 1, .duration1 = 1704, .level1 = 0},
     {.duration0 = 496, .level0 = 1, .duration1 = 0, .level1 = 0},
 };
+
 // ----------------------------------------------------------------------------
 
 typedef struct {
@@ -144,9 +255,21 @@ static const ir_remote_ops_t bose_ops = {
     .toggle_audio = bose_toggle_audio,
 };
 
+static esp_err_t dubas_radio_turn_audio_on(void);
+static esp_err_t dubas_radio_turn_audio_off(void);
+static esp_err_t dubas_radio_toggle_audio(void);
+
+static const ir_remote_ops_t dubas_radio_ops = {
+    .turn_audio_on = dubas_radio_turn_audio_on,
+    .turn_audio_off = dubas_radio_turn_audio_off,
+    .toggle_audio = dubas_radio_toggle_audio,
+};
+
 static void update_current_ops(ir_protocol_t protocol) {
     if (protocol == IR_PROTOCOL_BOSE) {
         g_current_ops = &bose_ops;
+    } else if (protocol == IR_PROTOCOL_DUBAS_RADIO) {
+        g_current_ops = &dubas_radio_ops;
     } else {
         g_current_ops = NULL;
     }
@@ -221,7 +344,7 @@ esp_err_t ir_remote_set_protocol(ir_protocol_t protocol)
 
 static esp_err_t send_signal(const rmt_symbol_word_t* signal_data, size_t signal_size)
 {
-    if (!g_runtime_config.ir_is_enabled) {
+    if (g_runtime_config.ir_protocol == IR_PROTOCOL_NONE) {
         ESP_LOGI(TAG, "IR transmission disabled per config, ignoring request");
         return ESP_FAIL;
     }
@@ -273,6 +396,29 @@ static esp_err_t bose_toggle_audio(void)
     return send_signal(bose_on_off_signal, sizeof(bose_on_off_signal));
 }
 
+static esp_err_t dubas_radio_turn_audio_on(void)
+{
+    ESP_LOGI(TAG, "Transmitting DUBAS_RADIO Audio ON (AUX) signal...");
+    return send_signal(dubas_radio_aux_signal, sizeof(dubas_radio_aux_signal));
+}
+
+static esp_err_t dubas_radio_turn_audio_off(void)
+{
+    ESP_LOGI(TAG, "Transmitting DUBAS_RADIO Audio OFF sequence (AUX -> 100ms -> TOGGLE)...");
+    esp_err_t ret = send_signal(dubas_radio_aux_signal, sizeof(dubas_radio_aux_signal));
+    if (ret != ESP_OK) {
+        return ret;
+    }
+    vTaskDelay(pdMS_TO_TICKS(100));
+    return send_signal(dubas_radio_on_off_signal, sizeof(dubas_radio_on_off_signal));
+}
+
+static esp_err_t dubas_radio_toggle_audio(void)
+{
+    ESP_LOGI(TAG, "Transmitting DUBAS_RADIO Audio TOGGLE (ON/OFF base) signal...");
+    return send_signal(dubas_radio_on_off_signal, sizeof(dubas_radio_on_off_signal));
+}
+
 esp_err_t ir_remote_turn_audio_on(void)
 {
     if (g_current_ops && g_current_ops->turn_audio_on) {
@@ -305,12 +451,14 @@ esp_err_t ir_remote_toggle_audio(void)
 
 esp_err_t ir_remote_enable(void)
 {
-    g_runtime_config.ir_is_enabled = true;
+    if (g_runtime_config.ir_protocol == IR_PROTOCOL_NONE) {
+        g_runtime_config.ir_protocol = IR_PROTOCOL_BOSE;
+    }
     return ESP_OK;
 }
 
 esp_err_t ir_remote_disable(void)
 {
-    g_runtime_config.ir_is_enabled = false;
+    g_runtime_config.ir_protocol = IR_PROTOCOL_NONE;
     return ESP_OK;
 }

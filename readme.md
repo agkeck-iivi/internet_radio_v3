@@ -117,7 +117,7 @@ The radio provides a web interface and a JSON API for real-time configuration. A
 | **Power Save Mode** | `power_save_mode` | `0` (None), `1` (Light), `2` (Deep) | Sleep strategy selection. |
 | **Light Sleep Delay** | `light_sleep_delay_ms` | Milliseconds | Timeout to enter Light Sleep. |
 | **Deep Sleep Delay** | `deep_sleep_delay_ms` | Milliseconds | Additional timeout to move from Light to Deep Sleep. |
-| **Enable IR Remote** | `ir_is_enabled` | `true`, `false` | Master toggle for the IR transmitter. |
+| **IR Remote Control** | `ir_protocol` | `0` (None), `1` (Bose Wave), `2` (Dubas Radio) | IR remote protocol selection. |
 
 #### API Access
 
@@ -133,7 +133,7 @@ curl -X POST -H "Content-Type: application/json" \
        "power_save_mode": 2,
        "light_sleep_delay_ms": 30000,
        "deep_sleep_delay_ms": 60000,
-       "ir_is_enabled": true
+       "ir_protocol": 1
      }' \
      http://<ESP32_IP_ADDRESS>/api/config
 ```

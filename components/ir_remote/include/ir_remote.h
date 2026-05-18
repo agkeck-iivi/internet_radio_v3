@@ -13,6 +13,7 @@ extern "C" {
 typedef enum {
     IR_PROTOCOL_NONE,
     IR_PROTOCOL_BOSE,
+    IR_PROTOCOL_DUBAS_RADIO,
     // Add more protocols here in the future
 } ir_protocol_t;
 

@@ -196,7 +196,7 @@ void update_volume_pulse_counter(void *pvParameters) {
           ESP_LOGI(TAG, "Unmuted by volume change to %d", new_volume);
           update_mute_state(false);
           save_mute_state_to_nvs(false);
-          if (g_runtime_config.ir_is_enabled) {
+          if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE) {
             ir_remote_turn_audio_on();
           }
         }
@@ -248,7 +248,7 @@ static void volume_press_task(void *pvParameters) {
           vTaskDelay(pdMS_TO_TICKS(10));
         }
 
-        if (g_runtime_config.ir_is_enabled) {
+        if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE) {
           ir_remote_toggle_audio();
         }
       } else {
@@ -266,7 +266,7 @@ static void volume_press_task(void *pvParameters) {
           ESP_LOGI(TAG, "Hardware unmuted");
           update_mute_state(false);
           save_mute_state_to_nvs(false);
-          if (g_runtime_config.ir_is_enabled) {
+          if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE) {
             ir_remote_turn_audio_on();
           }
         }
@@ -366,7 +366,7 @@ static void volume_press_task(void *pvParameters) {
         // If we reach here, it was a GPIO wakeup (or other)
         ESP_LOGI(TAG, "Resuming from light sleep...");
 
-        if (g_runtime_config.ir_is_enabled) {
+        if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE) {
           ir_remote_turn_audio_on();
         }
 
@@ -446,7 +446,7 @@ static void station_press_task(void *pvParameters) {
           update_mute_state(is_muted);
           save_mute_state_to_nvs(is_muted);
           ESP_LOGI(TAG, "Hardware unmuted via Station button");
-          if (g_runtime_config.ir_is_enabled) {
+          if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE) {
             ir_remote_turn_audio_on();
           }
           // Skip IP display when unmuting to act as a 'wake' action

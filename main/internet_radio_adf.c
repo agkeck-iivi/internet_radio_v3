@@ -788,13 +788,13 @@ void app_main(void) {
                                  evt);
 
   ESP_LOGI(TAG, "Initializing IR Remote Component");
-  ir_remote_init((gpio_num_t)IR_TX_GPIO_NUM, IR_PROTOCOL_BOSE);
+  ir_remote_init((gpio_num_t)IR_TX_GPIO_NUM, (ir_protocol_t)g_runtime_config.ir_protocol);
 
-  if (g_runtime_config.ir_is_enabled && !initial_mute) {
+  if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE && !initial_mute) {
     ESP_LOGI(TAG, "Sending Audio ON signal");
     vTaskDelay(pdMS_TO_TICKS(200));
     ir_remote_turn_audio_on();
-  } else if (g_runtime_config.ir_is_enabled && initial_mute) {
+  } else if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE && initial_mute) {
     ESP_LOGI(TAG, "Booting muted. Skipping Audio ON signal.");
   }
 

@@ -78,7 +78,7 @@ static esp_err_t api_config_get_handler(httpd_req_t *req) {
                           g_runtime_config.light_sleep_delay_ms);
   cJSON_AddNumberToObject(root, "deep_sleep_delay_ms",
                           g_runtime_config.deep_sleep_delay_ms);
-  cJSON_AddBoolToObject(root, "ir_is_enabled", g_runtime_config.ir_is_enabled);
+  cJSON_AddNumberToObject(root, "ir_protocol", g_runtime_config.ir_protocol);
 
   char *json_str = cJSON_PrintUnformatted(root);
   httpd_resp_set_type(req, "application/json");
@@ -115,7 +115,7 @@ static esp_err_t api_config_post_handler(httpd_req_t *req) {
   cJSON *root = cJSON_Parse(content);
   if (root) {
     cJSON *item;
-    bool ir_was_enabled = g_runtime_config.ir_is_enabled;
+    uint8_t ir_was_enabled = g_runtime_config.ir_protocol;
 
     if ((item = cJSON_GetObjectItem(root, "analog_attenuation")))
       g_runtime_config.analog_attenuation = (pcm5122_analog_atten_t)item->valueint;
@@ -127,8 +127,8 @@ static esp_err_t api_config_post_handler(httpd_req_t *req) {
       g_runtime_config.light_sleep_delay_ms = item->valueint;
     if ((item = cJSON_GetObjectItem(root, "deep_sleep_delay_ms")))
       g_runtime_config.deep_sleep_delay_ms = item->valueint;
-    if ((item = cJSON_GetObjectItem(root, "ir_is_enabled")))
-      g_runtime_config.ir_is_enabled = cJSON_IsTrue(item);
+    if ((item = cJSON_GetObjectItem(root, "ir_protocol")))
+      g_runtime_config.ir_protocol = item->valueint;
 
     save_app_config();
 
@@ -140,11 +140,12 @@ static esp_err_t api_config_post_handler(httpd_req_t *req) {
       audio_hal_set_volume(board_handle->audio_hal, current_vol);
     }
 
-    if (g_runtime_config.ir_is_enabled != ir_was_enabled) {
-      if (g_runtime_config.ir_is_enabled) {
+    if (g_runtime_config.ir_protocol != ir_was_enabled) {
+      ir_remote_set_protocol((ir_protocol_t)g_runtime_config.ir_protocol);
+      if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE && ir_was_enabled == IR_PROTOCOL_NONE) {
         ESP_LOGI(TAG, "IR enabled at runtime. Sending ON signal.");
         ir_remote_turn_audio_on();
-      } else {
+      } else if (g_runtime_config.ir_protocol == IR_PROTOCOL_NONE && ir_was_enabled != IR_PROTOCOL_NONE) {
         ESP_LOGI(TAG, "IR disabled at runtime. Sending OFF signal.");
         ir_remote_turn_audio_off();
       }
@@ -312,7 +313,7 @@ static esp_err_t config_page_handler(httpd_req_t *req) {
       "  <div class='field'><label>Power Save Mode<span class='tooltip'>(i)<span class='tip'>Estimated power and annual cost:<br>- <b>None:</b> 190mA ~$1.25/yr<br>- <b>Light:</b> 18mA ~$0.12/yr<br>- <b>Deep:</b> ~8mA ~$0.05/yr</span></span></label><select id='pwrSave'><option value='0'>None</option><option value='1'>Light Sleep Only</option><option value='2'>Light &rarr; Deep Sleep</option></select></div>"
       "  <div class='field'><label>Light Sleep Delay (seconds)<span class='tooltip'>(i)<span class='tip'>Default: 1200s (20 mins)</span></span></label><input type='number' id='lightDly'></div>"
       "  <div class='field'><label>Deep Sleep Delay (seconds)<span class='tooltip'>(i)<span class='tip'>Default: 7200s (2 hours)</span></span></label><input type='number' id='deepDly'></div>"
-      "  <div class='field' style='display:flex;align-items:center;'><label style='margin:0;flex:1'>Enable IR Remote</label><input type='checkbox' id='irEn' style='width:auto'></div>"
+      "  <div class='field'><label>IR Remote Control</label><select id='irProto'><option value='0'>None</option><option value='1'>Bose Wave</option><option value='2'>Dubas Radio</option></select></div>"
       "  <button class='btn' onclick='saveConfig()'>Save Settings</button>"
       "</div>"
       "<div class='info-section'>"
@@ -332,7 +333,7 @@ static esp_err_t config_page_handler(httpd_req_t *req) {
       "  document.getElementById('pwrSave').value=c.power_save_mode;"
       "  document.getElementById('lightDly').value=c.light_sleep_delay_ms/1000;"
       "  document.getElementById('deepDly').value=c.deep_sleep_delay_ms/1000;"
-      "  document.getElementById('irEn').checked=c.ir_is_enabled;}"
+      "  document.getElementById('irProto').value=c.ir_protocol;}"
       "async function saveConfig(){"
       "  const data={"
       "    analog_attenuation: parseInt(document.getElementById('anlgAttn').value),"
@@ -340,7 +341,7 @@ static esp_err_t config_page_handler(httpd_req_t *req) {
       "    power_save_mode: parseInt(document.getElementById('pwrSave').value),"
       "    light_sleep_delay_ms: parseInt(document.getElementById('lightDly').value)*1000,"
       "    deep_sleep_delay_ms: parseInt(document.getElementById('deepDly').value)*1000,"
-      "    ir_is_enabled: document.getElementById('irEn').checked"
+      "    ir_protocol: parseInt(document.getElementById('irProto').value)"
       "  };"
       "  const r=await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});"
       "  if(r.ok)alert('Settings saved and applied!');else alert('Error saving settings!');}"
