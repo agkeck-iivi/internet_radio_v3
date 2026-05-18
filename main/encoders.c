@@ -190,11 +190,16 @@ void update_volume_pulse_counter(void *pvParameters) {
         counter->value = new_volume;
       } else {
         // If muted and user changes volume, unmute first
-        audio_hal_set_mute(counter->board_handle->audio_hal, false);
-        is_muted = false;
-        ESP_LOGI(TAG, "Unmuted by volume change to %d", new_volume);
-        update_mute_state(false);
-        save_mute_state_to_nvs(false);
+        if (is_muted) {
+          audio_hal_set_mute(counter->board_handle->audio_hal, false);
+          is_muted = false;
+          ESP_LOGI(TAG, "Unmuted by volume change to %d", new_volume);
+          update_mute_state(false);
+          save_mute_state_to_nvs(false);
+          if (g_runtime_config.ir_is_enabled) {
+            ir_remote_turn_audio_on();
+          }
+        }
 
         counter->value = new_volume;
         audio_hal_set_volume(counter->board_handle->audio_hal, new_volume);
@@ -261,6 +266,9 @@ static void volume_press_task(void *pvParameters) {
           ESP_LOGI(TAG, "Hardware unmuted");
           update_mute_state(false);
           save_mute_state_to_nvs(false);
+          if (g_runtime_config.ir_is_enabled) {
+            ir_remote_turn_audio_on();
+          }
         }
       }
       // Debounce after processing press
@@ -438,6 +446,9 @@ static void station_press_task(void *pvParameters) {
           update_mute_state(is_muted);
           save_mute_state_to_nvs(is_muted);
           ESP_LOGI(TAG, "Hardware unmuted via Station button");
+          if (g_runtime_config.ir_is_enabled) {
+            ir_remote_turn_audio_on();
+          }
           // Skip IP display when unmuting to act as a 'wake' action
         } else {
           int64_t press_duration = esp_timer_get_time() - press_start_time;
