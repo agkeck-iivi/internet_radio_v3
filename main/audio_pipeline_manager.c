@@ -81,6 +81,12 @@ static esp_err_t codec_event_cb(audio_element_handle_t el,
       ESP_ERROR_CHECK(i2s_stream_set_clk(
           audio_pipeline_components.i2s_stream_writer, music_info.sample_rates,
           music_info.bits, music_info.channels));
+
+      extern bool get_mute_state(void);
+      if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE && !get_mute_state()) {
+        ESP_LOGI(TAG, "Audio stream active. Ensuring Bose Audio is ON.");
+        ir_remote_turn_audio_on();
+      }
     }
   }
   return ESP_OK;

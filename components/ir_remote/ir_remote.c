@@ -361,12 +361,18 @@ static esp_err_t send_signal(const rmt_symbol_word_t* signal_data, size_t signal
     rmt_copy_encoder_config_t copy_encoder_config = {};
     esp_err_t ret = rmt_new_copy_encoder(&copy_encoder_config, &copy_encoder);
     if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to create RMT copy encoder: %d (%s)", ret, esp_err_to_name(ret));
         return ret;
     }
 
     ret = rmt_transmit(g_tx_channel, copy_encoder, signal_data, signal_size, &transmit_config);
-    if (ret == ESP_OK) {
-        rmt_tx_wait_all_done(g_tx_channel, -1);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to transmit RMT signal: %d (%s)", ret, esp_err_to_name(ret));
+    } else {
+        ret = rmt_tx_wait_all_done(g_tx_channel, -1);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "RMT wait all done failed: %d (%s)", ret, esp_err_to_name(ret));
+        }
     }
     rmt_del_encoder(copy_encoder);
 

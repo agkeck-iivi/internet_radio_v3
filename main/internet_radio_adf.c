@@ -787,21 +787,13 @@ void app_main(void) {
   audio_event_iface_set_listener(esp_periph_set_get_event_iface(periph_set),
                                  evt);
 
-  ESP_LOGI(TAG, "Initializing IR Remote Component");
-  ir_remote_init((gpio_num_t)IR_TX_GPIO_NUM, (ir_protocol_t)g_runtime_config.ir_protocol);
-
-  if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE && !initial_mute) {
-    ESP_LOGI(TAG, "Sending Audio ON signal");
-    vTaskDelay(pdMS_TO_TICKS(200));
-    ir_remote_turn_audio_on();
-  } else if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE && initial_mute) {
-    ESP_LOGI(TAG, "Booting muted. Skipping Audio ON signal.");
-  }
-
   ESP_LOGI(TAG, "Waiting for Wi-Fi connection...");
   xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, false, true,
                       portMAX_DELAY);
   ESP_LOGI(TAG, "Wi-Fi Connected.");
+
+  ESP_LOGI(TAG, "Initializing IR Remote Component");
+  ir_remote_init((gpio_num_t)IR_TX_GPIO_NUM, (ir_protocol_t)g_runtime_config.ir_protocol);
 
   // Start audio pipeline AFTER WiFi is confirmed connected
   ESP_LOGI(TAG, "Starting audio pipeline...");
