@@ -2,20 +2,11 @@
 
 #include "esp_err.h"
 #include "driver/gpio.h"
+#include "app_config.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @brief Supported IR remote protocols.
- */
-typedef enum {
-    IR_PROTOCOL_NONE,
-    IR_PROTOCOL_BOSE,
-    IR_PROTOCOL_DUBAS_RADIO,
-    // Add more protocols here in the future
-} ir_protocol_t;
 
 /**
  * @brief Initializes the IR remote component.

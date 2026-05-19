@@ -37,6 +37,15 @@ typedef enum {
 } pcm5122_digital_atten_t;
 
 /**
+ * @brief Supported IR remote protocols.
+ */
+typedef enum {
+  IR_PROTOCOL_NONE = 0,
+  IR_PROTOCOL_BOSE = 1,
+  IR_PROTOCOL_DUBAS_RADIO = 2,
+} ir_protocol_t;
+
+/**
  * @brief Consolidated runtime configuration structure.
  */
 typedef struct {
@@ -45,7 +54,7 @@ typedef struct {
   power_save_mode_t power_save_mode;
   uint32_t light_sleep_delay_ms;
   uint32_t deep_sleep_delay_ms;
-  uint8_t ir_protocol;
+  ir_protocol_t ir_protocol;
 } app_runtime_config_t;
 
 extern app_runtime_config_t g_runtime_config;
