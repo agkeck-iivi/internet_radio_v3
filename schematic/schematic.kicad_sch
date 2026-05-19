@@ -2897,28 +2897,31 @@
 			(on_board yes)
 			(in_pos_files yes)
 			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "U"
-				(at 12.7 13.97 0)
+			(property "Reference" "oled128x64"
+				(at -5.588 0.508 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
+					(justify left)
 				)
 			)
-			(property "Value" "oled128x64"
-				(at -16.51 14.605 0)
+			(property "Value" ""
+				(at 10.16 -2.5399 0)
 				(show_name no)
 				(do_not_autoplace no)
+				(hide yes)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
+					(justify left)
 				)
 			)
-			(property "Footprint" ""
-				(at 0.9525 4.7625 90)
+			(property "Footprint" "oled128x64_spi:oled128x64_spi"
+				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(hide yes)
@@ -2929,7 +2932,7 @@
 				)
 			)
 			(property "Datasheet" ""
-				(at 0.9525 4.7625 90)
+				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(hide yes)
@@ -2940,7 +2943,7 @@
 				)
 			)
 			(property "Description" ""
-				(at 0.9525 4.7625 90)
+				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(hide yes)
@@ -8027,7 +8030,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "bfe1544c-b216-4c51-b329-c3d2edc1482c")
-		(property "Reference" "oled128x1"
+		(property "Reference" "oled128x64"
 			(at 221.742 109.982 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8107,7 +8110,7 @@
 		(instances
 			(project "schematic"
 				(path "/ad99cfc7-1930-4a76-846f-3ad4dbd23fae"
-					(reference "oled128x1")
+					(reference "oled128x64")
 					(unit 1)
 				)
 			)
