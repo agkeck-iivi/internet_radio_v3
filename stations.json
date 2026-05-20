@@ -1,5 +1,11 @@
 [
 	{
+		"call_sign": "KHEN",
+		"origin": "Salida",
+		"uri": "https://stream.pacificaservice.org:9000/khen_128",
+		"codec": 0
+	},
+	{
 		"call_sign": "KEXP",
 		"origin": "Seattle",
 		"uri": "https://kexp.streamguys1.com/kexp160.aac",
@@ -33,12 +39,6 @@
 		"call_sign": "KOTO",
 		"origin": "Telluride",
 		"uri": "http://playerservices.streamtheworld.com/api/livestream-redirect/KOTOFM.mp3",
-		"codec": 0
-	},
-	{
-		"call_sign": "KHEN",
-		"origin": "Salida",
-		"uri": "https://stream.pacificaservice.org:9000/khen_128",
 		"codec": 0
 	},
 	{
