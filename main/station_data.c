@@ -58,7 +58,7 @@ static const default_station_t default_stations[] = {
      "https://playerservices.streamtheworld.com/api/livestream-redirect/"
      "KUFMFM.mp3",
      CODEC_TYPE_MP3},
-    {"KRCL", "Salt Lake City", "https://kcpw.xmission.com/krcl-high",
+    {"KRCL", "Salt Lake City", "https://stream.xmission.com/krcl-high",
      CODEC_TYPE_AAC},
     // {"KRRC", "Reed College", "https://stream.radiojar.com/3wg5hpdkfkeuv",
     // CODEC_TYPE_MP3}
