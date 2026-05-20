@@ -23,7 +23,7 @@ The radio's display will show a message indicating it is waiting to be provision
 2. **Start Provisioning**: Open the app and tap **"Provision Device"**.
 3. **Bypass QR Code**:  This device does not use a QR code for pairing.  Instead, the device will broadcast its name (agk radio) and MAC address via Bluetooth Low Energy (BLE).  Select the agk radio:<mac-address> from the list of discovered devices.
 4. **Scan for Wi-Fi**: Once connected via Bluetooth, the app will scan for available Wi-Fi networks in your area.
-5. **Enter Credentials**: Select your home Wi-Fi network (2.4GHz) from the list and enter your Wi-Fi password.
+5. **Enter Credentials**: Select your Wi-Fi network (2.4GHz) from the list and enter your Wi-Fi password.
 6. **Complete Setup**: The app will send the credentials to the radio. The app will display "Provisioning Successful," and the radio will connect to the internet.
 7. **Ready to Play**: The radio's screen will briefly display its newly acquired IP address and then begin playing the default internet radio stream.
 
@@ -37,7 +37,7 @@ The radio is controlled entirely using two rotary knobs. Both knobs can be turne
 
 * **Turn**: Adjusts the volume from 0 to 100. If the radio is currently muted, turning the knob will automatically unmute the audio and adjust the volume.
 * **Single Click**: Toggles the audio mute on and off. If the radio has entered its "Light Sleep" power-saving mode (where the screen turns off), a single click will wake it up and unmute the audio.
-* **Double Click**: If you are using the radio with a Bose audio system, a double-click will send an Infrared (IR) signal to toggle the power on the Bose system.
+* **Double Click**: If you are using the radio an Infrared (IR) signal to toggle the power on an attached receiver if configured to do so.
 * **Hold at Boot**: As mentioned above, holding this button while the radio powers on will erase saved Wi-Fi credentials and start Provisioning Mode.
 
 ### Station Selection
@@ -94,9 +94,11 @@ If you want to add a new station, you will need its direct audio stream URL. Sta
 The easiest way to find compatible stream URLs is to use **[fmstream.org](https://fmstream.org)**.
 
 1. Search for your desired radio station on the site (for example, "KEXP").
+1. Set layout to *FULL*.
 2. Look for the direct streaming links provided in the search results. Next to each URL, you will see the **format/codec** (e.g., MP3, AAC) and the bitrate (e.g., 128 kbps).
 3. Copy the URL that corresponds to the format you want (typically ending in `.mp3` or `.aac`), and paste it into your radio's Station Configuration page.
 
-![fmstream KEXP Example](images/fmstream_kexp.png)
+![fmstream KEXP Example](images/fmstream_screenshot.png)
 
 1. In the radio's configuration, select the exact codec (MP3, AAC, etc.) that was listed next to the URL on the fmstream website.
+2. Use *origin* to help describe the station.  You have about 14 characters available on the display.
