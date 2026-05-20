@@ -92,7 +92,7 @@
     {
         "call_sign": "KRCL",
         "origin": "Salt Lake City",
-        "uri": "http://stream.xmission.com:8000/krcl-low",
+        "uri": "https://kcpw.xmission.com/krcl-high",
         "codec": 1
     }
 ]

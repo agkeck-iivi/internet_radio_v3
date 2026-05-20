@@ -46,4 +46,4 @@ The following table shows the measured bitrates for the default radio stations (
 | KALX | 128 kbps | 48000 Hz | `https://stream.kalx.berkeley.edu:8443/kalx-128.mp3` |
 | WFUV | 128 kbps | 44100 Hz | `https://onair.wfuv.org/onair-hi` |
 | KUFM | 64 kbps | 22050 Hz | `https://playerservices.streamtheworld.com/api/livestream-redirect/KUFMFM.mp3` |
-| KRCL | 256 kbps | 44100 Hz | `http://stream.xmission.com:8000/krcl-low` |
+| KRCL | 192 kbps | 44100 Hz | `https://kcpw.xmission.com/krcl-high` |
