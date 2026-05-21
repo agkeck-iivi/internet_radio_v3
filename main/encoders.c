@@ -196,9 +196,6 @@ void update_volume_pulse_counter(void *pvParameters) {
           ESP_LOGI(TAG, "Unmuted by volume change to %d", new_volume);
           update_mute_state(false);
           save_mute_state_to_nvs(false);
-          if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE) {
-            ir_remote_turn_audio_on();
-          }
         }
 
         counter->value = new_volume;
@@ -266,9 +263,6 @@ static void volume_press_task(void *pvParameters) {
           ESP_LOGI(TAG, "Hardware unmuted");
           update_mute_state(false);
           save_mute_state_to_nvs(false);
-          if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE) {
-            ir_remote_turn_audio_on();
-          }
         }
       }
       // Debounce after processing press
@@ -336,7 +330,8 @@ static void volume_press_task(void *pvParameters) {
 
           // Ensure Station button is released before entering deep sleep
           while (gpio_get_level(STATION_PRESS_GPIO) == 0) {
-            ESP_LOGI(TAG, "Waiting for Station button release before deep sleep...");
+            ESP_LOGI(TAG,
+                     "Waiting for Station button release before deep sleep...");
             vTaskDelay(pdMS_TO_TICKS(100));
           }
 
@@ -347,7 +342,8 @@ static void volume_press_task(void *pvParameters) {
           // Disable all wakeup sources before re-configuring for deep sleep
           esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
 
-          // Ensure RTC pull-up is enabled for deep sleep (using STATION_PRESS_GPIO which is RTCIO)
+          // Ensure RTC pull-up is enabled for deep sleep (using
+          // STATION_PRESS_GPIO which is RTCIO)
           rtc_gpio_init(STATION_PRESS_GPIO);
           rtc_gpio_set_direction(STATION_PRESS_GPIO, RTC_GPIO_MODE_INPUT_ONLY);
           rtc_gpio_pullup_en(STATION_PRESS_GPIO);
@@ -365,10 +361,6 @@ static void volume_press_task(void *pvParameters) {
 
         // If we reach here, it was a GPIO wakeup (or other)
         ESP_LOGI(TAG, "Resuming from light sleep...");
-
-        if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE) {
-          ir_remote_turn_audio_on();
-        }
 
         // Trigger reconnection immediately (non-blocking)
         set_wifi_sleep_mode(false);
@@ -409,7 +401,8 @@ static void volume_press_task(void *pvParameters) {
 static void station_press_task(void *pvParameters) {
   ESP_LOGI(TAG, "Station press button task started.");
   while (1) {
-    if (gpio_get_level(STATION_PRESS_GPIO) == 0) { // Button is pressed (active low)
+    if (gpio_get_level(STATION_PRESS_GPIO) ==
+        0) { // Button is pressed (active low)
       int64_t press_start_time = esp_timer_get_time();
       bool long_press_handled = false;
 
@@ -446,10 +439,6 @@ static void station_press_task(void *pvParameters) {
           update_mute_state(is_muted);
           save_mute_state_to_nvs(is_muted);
           ESP_LOGI(TAG, "Hardware unmuted via Station button");
-          if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE) {
-            ir_remote_turn_audio_on();
-          }
-          // Skip IP display when unmuting to act as a 'wake' action
         } else {
           int64_t press_duration = esp_timer_get_time() - press_start_time;
           ESP_LOGI(TAG, "Short press detected (%" PRId64 " us). Showing IP.",

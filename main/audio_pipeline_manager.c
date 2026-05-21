@@ -1,23 +1,23 @@
 #include "audio_pipeline_manager.h"
 #include "aac_decoder.h"
+#include "app_config.h"
 #include "audio_common.h"
+#include "audio_event_iface.h"
 #include "board.h" // For CONFIG_ESP32_C3_LYRA_V2_BOARD and I2S_STREAM_PDM_TX_CFG_DEFAULT
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_sleep.h"
+#include "esp_task_wdt.h"
 #include "flac_decoder.h"
 #include "http_stream.h"
 #include "i2s_stream.h"
 #include "internet_radio_adf.h"
+#include "ir_remote.h"
+#include "lvgl_ssd1306_setup.h"
 #include "mp3_decoder.h"
 #include "ogg_decoder.h"
-#include <string.h>
-#include "esp_task_wdt.h"
 #include "sdkconfig.h"
-#include "app_config.h"
-#include "ir_remote.h"
-#include "audio_event_iface.h"
-#include "lvgl_ssd1306_setup.h"
+#include <string.h>
 
 extern audio_pipeline_components_t audio_pipeline_components;
 extern volatile bool g_is_pipeline_running;
@@ -83,7 +83,7 @@ static esp_err_t codec_event_cb(audio_element_handle_t el,
           music_info.bits, music_info.channels));
 
       extern bool get_mute_state(void);
-      if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE && !get_mute_state()) {
+      if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE) {
         ESP_LOGI(TAG, "Audio stream active. Ensuring Bose Audio is ON.");
         ir_remote_turn_audio_on();
       }
@@ -282,7 +282,8 @@ esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
   g_is_pipeline_running = false;
   destroy_audio_pipeline(components);
 
-  ESP_LOGI(TAG, "Configuring wakeup on GPIO %d and %d (LOW level)", wakeup_gpio1, wakeup_gpio2);
+  ESP_LOGI(TAG, "Configuring wakeup on GPIO %d and %d (LOW level)",
+           wakeup_gpio1, wakeup_gpio2);
   // 6. Configure hardware wakeup
   esp_err_t err = gpio_wakeup_enable(wakeup_gpio1, GPIO_INTR_LOW_LEVEL);
   if (err != ESP_OK) {
@@ -334,9 +335,8 @@ esp_err_t audio_pipeline_manager_sleep(audio_pipeline_components_t *components,
   return ESP_OK;
 }
 
-esp_err_t
-audio_pipeline_manager_wakeup(audio_pipeline_components_t *components,
-                              audio_event_iface_handle_t evt) {
+esp_err_t audio_pipeline_manager_wakeup(audio_pipeline_components_t *components,
+                                        audio_event_iface_handle_t evt) {
   if (components == NULL) {
     return ESP_ERR_INVALID_ARG;
   }
