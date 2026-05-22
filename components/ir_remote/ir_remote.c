@@ -428,7 +428,12 @@ static esp_err_t dubas_radio_toggle_audio(void)
 esp_err_t ir_remote_turn_audio_on(void)
 {
     if (g_current_ops && g_current_ops->turn_audio_on) {
-        return g_current_ops->turn_audio_on();
+        esp_err_t ret = g_current_ops->turn_audio_on();
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to turn Audio ON with ir_remote: %s",
+                esp_err_to_name(ret));
+        }
+        return ret;
     }
     
     ESP_LOGW(TAG, "Turn audio ON not supported for protocol %d", g_current_protocol);
