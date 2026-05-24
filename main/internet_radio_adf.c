@@ -792,8 +792,6 @@ void app_main(void) {
                       portMAX_DELAY);
   ESP_LOGI(TAG, "Wi-Fi Connected.");
 
-  ESP_LOGI(TAG, "Initializing IR Remote Component");
-  ir_remote_init((gpio_num_t)IR_TX_GPIO_NUM, (ir_protocol_t)g_runtime_config.ir_protocol);
 
   // Start audio pipeline AFTER WiFi is confirmed connected
   ESP_LOGI(TAG, "Starting audio pipeline...");
@@ -817,6 +815,10 @@ void app_main(void) {
   //  start encoder pulse counters
 
   init_encoders(board_handle, initial_volume, initial_mute, unmuted_volume);
+
+
+  ESP_LOGI(TAG, "Initializing IR Remote Component");
+  ir_remote_init((gpio_num_t)IR_TX_GPIO_NUM, (ir_protocol_t)g_runtime_config.ir_protocol);
 
   while (1) {
     audio_event_iface_msg_t msg;
