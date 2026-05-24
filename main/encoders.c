@@ -301,6 +301,10 @@ static void volume_press_task(void *pvParameters) {
                                      requested_sleep_us);
 
         // --- AFTER WAKEUP ---
+        
+        ESP_LOGI(TAG, "Reinitializing IR remote after sleep");
+        ir_remote_deinit();
+        ir_remote_init((gpio_num_t)IR_TX_GPIO, (ir_protocol_t)g_runtime_config.ir_protocol);
 
         // Set wakeup timestamp for lockout immediately to prevent race with
         // polling tasks
