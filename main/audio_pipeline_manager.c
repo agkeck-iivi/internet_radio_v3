@@ -41,7 +41,7 @@ const char *codec_type_to_string(codec_type_t codec) {
 }
 
 void delayed_audio_on_task(void *pvParameters) {
-  vTaskDelay(pdMS_TO_TICKS(150));
+  vTaskDelay(pdMS_TO_TICKS(200));
   ESP_ERROR_CHECK(ir_remote_turn_audio_on());
   vTaskDelete(NULL);
 }
@@ -91,7 +91,7 @@ static esp_err_t codec_event_cb(audio_element_handle_t el,
       extern bool get_mute_state(void);
       if (g_runtime_config.ir_protocol != IR_PROTOCOL_NONE) {
         ESP_LOGI(TAG, "Audio stream active. Ensuring Bose Audio is ON.");
-        // ir_remote_turn_audio_on();
+        ir_remote_turn_audio_on();
         // send another ir command after a delay
         xTaskCreate(delayed_audio_on_task, "delayed_audio_on_task", 3*1024, NULL,
                     tskIDLE_PRIORITY + 1, NULL);
