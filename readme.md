@@ -15,7 +15,15 @@
 ![Version 3 Schematic](schematic/schematic.pdf)
 
 ### build
-![Version 3 Prototype](images/version3_first_board.jpg)
+
+**Version 1**
+![Version 1 Build](images/v1_build.jpg)
+
+**Version 2**
+![Version 2 Build](images/v2_build.jpg)
+
+**Version 3**
+![Version 3 Build](images/version3_first_board.jpg)
 
 ## software
 
@@ -41,6 +49,7 @@ The audio pipeline is virtually the same as in version 1.  We added an accumulat
 In Version 3, the radio migrated from the ES8388 (legacy LyraT design) to the high-performance **PCM5122 DAC** (Adafruit board).
 
 The PCM5122 integration features:
+
 * **Custom Driver**: A dedicated driver implementation that adheres to ESP-ADF conventions while providing low-level register control.
 * **Analog Gain Control**: To manage the high output levels of the PCM5122, we implemented a 6 dB reduction in the analog gain stage (Page 1, Register 2).
 * **Logarithmic Volume Scaling**: Volume settings (0-100) are mapped logarithmically to the DAC's digital volume registers to provide a natural, linear-sounding response to the user.
@@ -98,6 +107,7 @@ The bose IR protocal is stateful: the on/off button performs different functions
 ### nvs
 
 The system uses Non-Volatile Storage (NVS) to persist all critical states and settings:
+
 * **Application Settings**: Analog and Digital attenuation, Power Save mode, sleep delays, and IR transmitter status.
 * **Device State**: Current volume level, mute status, and the last selected station index.
 * **WiFi State**: Cached BSSID, channel, and IP configuration for "Fast Connect" boot optimizations.
@@ -125,6 +135,7 @@ The radio provides a web interface and a JSON API for real-time configuration. A
 * **POST `/api/config`**: Updates the configuration immediately. Changes are persisted to NVS.
 
 Example update with all parameters:
+
 ```bash
 curl -X POST -H "Content-Type: application/json" \
      -d '{
@@ -167,7 +178,7 @@ We provide a web interface to update the station data at <ESP32_IP_ADDRESS>/api/
 
 ## power management
 
-The radio implements a multi-stage power-saving strategy to minimize energy consumption when idle. 
+The radio implements a multi-stage power-saving strategy to minimize energy consumption when idle.
 
 *Note: In local tests setting the router's default dns server to 8.8.8.8  (google dns) or 1.1.1.1 (cloudflare dns) results in faster wakeup times.*
 
@@ -185,6 +196,7 @@ The following table outlines the current draw and estimated annual energy costs 
 *†Deep sleep current is dominated by the DevKitC's onboard LDO quiescent current (~5mA) and Power LED (~3mA), as the ESP32-S3 chip itself draws <100µA in this state.*
 
 #### Sleep States
+
 * **Light Sleep**: Entered after a period of inactivity while muted. The CPU state is preserved, and the **SSD1306 screen is automatically powered off** to save energy. The system can be woken by either encoder button.
 * **Deep Sleep**: Entered after an extended period in light sleep (if configured). The system performs a full power-down. **Only the Station button (GPIO 6)** can wake the device from this state.
 * **IR Sync**: If enabled, the system automatically sends a "Power Off" IR command to the Bose radio when entering sleep, and a "Power On" command when waking.
