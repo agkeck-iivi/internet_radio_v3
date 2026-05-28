@@ -45,8 +45,6 @@ static const char *TAG = "INTERNET_RADIO";
 
 #include "gpio_assignments.h"
 
-#define IR_TX_GPIO_NUM IR_TX_GPIO
-
 #define BUTTON_POLLING_PERIOD_MS 100
 
 #define BITRATE_UPDATE_INTERVAL_MS 1000
@@ -676,13 +674,14 @@ void app_main(void) {
     } else {
       ESP_LOGI(TAG, "Cold boot or non-button wakeup: Defaulting to MUTED.");
     }
-    
+
     // Save the determined mute state to NVS
     err = nvs_set_u8(nvs_handle, "mute_state", initial_mute ? 1 : 0);
     if (err == ESP_OK) {
       nvs_commit(nvs_handle);
     } else {
-      ESP_LOGE(TAG, "Error (%s) updating 'mute_state' in NVS!", esp_err_to_name(err));
+      ESP_LOGE(TAG, "Error (%s) updating 'mute_state' in NVS!",
+               esp_err_to_name(err));
     }
 
     unmuted_volume = initial_volume;
@@ -792,7 +791,6 @@ void app_main(void) {
                       portMAX_DELAY);
   ESP_LOGI(TAG, "Wi-Fi Connected.");
 
-
   // Start audio pipeline AFTER WiFi is confirmed connected
   ESP_LOGI(TAG, "Starting audio pipeline...");
   err = create_audio_pipeline(&audio_pipeline_components,
@@ -816,9 +814,9 @@ void app_main(void) {
 
   init_encoders(board_handle, initial_volume, initial_mute, unmuted_volume);
 
-
   ESP_LOGI(TAG, "Initializing IR Remote Component");
-  ir_remote_init((gpio_num_t)IR_TX_GPIO_NUM, (ir_protocol_t)g_runtime_config.ir_protocol);
+  ir_remote_init((gpio_num_t)IR_TX_GPIO,
+                 (ir_protocol_t)g_runtime_config.ir_protocol);
 
   while (1) {
     audio_event_iface_msg_t msg;
