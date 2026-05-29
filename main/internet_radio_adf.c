@@ -45,7 +45,6 @@ static const char *TAG = "INTERNET_RADIO";
 
 #include "gpio_assignments.h"
 
-#define BUTTON_POLLING_PERIOD_MS 100
 
 #define BITRATE_UPDATE_INTERVAL_MS 1000
 
@@ -694,9 +693,6 @@ void app_main(void) {
 #else
   tcpip_adapter_init();
 #endif
-  // Create the UI message queue before any UI tasks are started
-  g_ui_queue = xQueueCreate(10, sizeof(ui_update_message_t));
-
   display = lvgl_ssd1306_setup();
   screens_init(display);
   update_station_name(radio_stations[current_station].call_sign);
@@ -812,7 +808,7 @@ void app_main(void) {
 
   //  start encoder pulse counters
 
-  init_encoders(board_handle, initial_volume, initial_mute, unmuted_volume);
+  init_encoders(board_handle, initial_volume, initial_mute);
 
   ESP_LOGI(TAG, "Initializing IR Remote Component");
   ir_remote_init((gpio_num_t)IR_TX_GPIO,

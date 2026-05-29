@@ -1,6 +1,5 @@
 #include "app_config.h"
 #include "esp_log.h"
-#include "include/app_config.h"
 #include "nvs_flash.h"
 #include <stdbool.h>
 

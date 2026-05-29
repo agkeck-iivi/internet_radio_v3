@@ -459,17 +459,3 @@ esp_err_t ir_remote_toggle_audio(void)
     ESP_LOGW(TAG, "Toggle audio not supported for protocol %d", g_current_protocol);
     return ESP_OK;
 }
-
-esp_err_t ir_remote_enable(void)
-{
-    if (g_runtime_config.ir_protocol == IR_PROTOCOL_NONE) {
-        g_runtime_config.ir_protocol = IR_PROTOCOL_BOSE;
-    }
-    return ESP_OK;
-}
-
-esp_err_t ir_remote_disable(void)
-{
-    g_runtime_config.ir_protocol = IR_PROTOCOL_NONE;
-    return ESP_OK;
-}

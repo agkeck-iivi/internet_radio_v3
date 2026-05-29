@@ -53,20 +53,6 @@ esp_err_t ir_remote_turn_audio_off(void);
  */
 esp_err_t ir_remote_toggle_audio(void);
 
-/**
- * @brief Enables the processing of IR commands.
- * 
- * @return ESP_OK on success, otherwise an error code.
- */
-esp_err_t ir_remote_enable(void);
-
-/**
- * @brief Disables the processing of IR commands.
- * 
- * @return ESP_OK on success, otherwise an error code.
- */
-esp_err_t ir_remote_disable(void);
-
 #ifdef __cplusplus
 }
 #endif

@@ -57,7 +57,6 @@ extern audio_pipeline_components_t audio_pipeline_components;
 #define VOLUME_POLLING_PERIOD_MS 100
 #define VOLUME_PRESS_POLLING_PERIOD_MS 20
 
-#define STATION_POLLING_PERIOD_MS 100
 #define STATION_PRESS_POLLING_PERIOD_MS 20
 
 // this pause allows the user to change the station multiple times before the
@@ -85,7 +84,6 @@ typedef struct {
 typedef struct {
   pcnt_unit_handle_t pcnt_unit;
   int current_index;
-  const int *values;
   int num_values;
 } cyclic_pulse_counter_t;
 static cyclic_pulse_counter_t *g_station_counter_ptr = NULL;
@@ -577,7 +575,7 @@ bool is_volume_switch_pressed(void) {
 bool get_mute_state(void) { return is_muted; }
 
 void init_encoders(audio_board_handle_t board_handle, int initial_volume,
-                   bool initial_mute, int unmuted_volume) {
+                   bool initial_mute) {
   is_muted = initial_mute;
   update_mute_state(is_muted);
 

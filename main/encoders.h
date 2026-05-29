@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 void init_encoders(audio_board_handle_t board_handle, int initial_volume,
-                   bool initial_mute, int unmuted_volume);
+                   bool initial_mute);
 
 /**
  * @brief Initialize only the encoder button switches (GPIOs).

@@ -68,9 +68,6 @@ static int _http_stream_event_handle(http_stream_event_msg_t *msg) {
   }
 }
 
-#include "board.h"                        // remove after debugging
-extern audio_board_handle_t board_handle; // remove after debugging
-
 static esp_err_t codec_event_cb(audio_element_handle_t el,
                                 audio_event_iface_msg_t *msg, void *ctx) {
   ESP_LOGI(TAG, "Codec event callback triggered for element: %s, command: %d",
