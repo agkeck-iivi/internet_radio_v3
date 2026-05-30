@@ -9,6 +9,10 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
+// to build from command line:
+// source /home/agkeck/.espressif/v5.4.3/esp-idf/export.sh && idf.py build
+// but this updates the sdkconfig file for some reason.
+
 #include "audio_common.h"
 #include "audio_event_iface.h"
 #include "audio_pipeline_manager.h"
@@ -44,7 +48,6 @@ static const char *TAG = "INTERNET_RADIO";
 #define INITIAL_VOLUME 60
 
 #include "gpio_assignments.h"
-
 
 #define BITRATE_UPDATE_INTERVAL_MS 1000
 
