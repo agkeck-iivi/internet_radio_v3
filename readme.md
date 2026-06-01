@@ -1,5 +1,7 @@
 # Internet radio v3
 
+# this archive is now historical.  Active development is moved to https://codeberg.org/agkeck/internet_radio_v3
+
 ## hardware
 
 * ESP32s3 DevkitC N8R8
